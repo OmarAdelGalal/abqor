@@ -3,159 +3,182 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Mail, Lock, ArrowRight, Apple } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
+import { authApi } from '@/lib/auth';
 
 export default function LoginPage() {
-  const [showEmailForm, setShowEmailForm] = useState(false);
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
+  const [error, setError] = useState('');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
     setIsLoading(true);
     
     try {
-      const response = await fetch(`/api/auth/login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Device-Id': 'web-client-' + Math.random().toString(36).substring(7),
-          'X-Device-Class': 'desktop'
-        },
-        body: JSON.stringify({ email, password })
-      });
-
-      const data = await response.json();
-
-      if (response.ok && data.isSuccess) {
-        if (data.data?.token) {
-          localStorage.setItem('token', data.data.token);
-          alert('تم تسجيل الدخول بنجاح!');
-          router.push('/');
-        } else {
-          alert('فشل تسجيل الدخول: استجابة غير صالحة من الخادم');
-        }
-      } else {
-        alert(data.message || 'فشل تسجيل الدخول. تأكد من البريد الإلكتروني وكلمة المرور.');
+      // Real API Call
+      const data = await authApi.login({ email, password });
+      
+      // Save the token if the backend returns one (e.g., inside data.token or data.user.token)
+      if (data && data.token) {
+        localStorage.setItem('abqor_token', data.token);
+      } else if (data && data.user && data.user.token) {
+        localStorage.setItem('abqor_token', data.user.token);
       }
-    } catch (error) {
-      console.error('Login error:', error);
-      alert('حدث خطأ في الاتصال بالخادم. يرجى المحاولة لاحقاً.');
+
+      // Success
+      router.push('/dashboard');
+    } catch (err: any) {
+      console.error("Login Error:", err);
+      // Display the real error message from the backend (or fallback to generic if network failed)
+      setError(err.message || 'حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4" dir="rtl">
-      <div className="bg-white rounded-[24px] p-8 shadow-[0_8px_30px_rgb(0,0,0,0.08)] max-w-[360px] w-full mx-auto flex flex-col items-center">
-        {!showEmailForm ? (
-          <>
-            <h1 className="text-[#087083] text-[28px] font-black tracking-wider mb-2 mt-2 font-sans">ABQOR</h1>
-            <h2 className="text-[#087083] font-bold text-lg mb-8">تسجيل الدخول</h2>
+    <div className="min-h-screen bg-white p-4" dir="rtl">
+      <div className="max-w-[400px] mx-auto w-full pt-4">
+        
+        {/* Header / Back Button */}
+        <div className="flex items-center mb-10">
+          <Link href="/" className="text-gray-800 hover:text-gray-600 transition-colors">
+            <ArrowRight size={24} />
+          </Link>
+        </div>
 
-            <div className="w-full space-y-3">
-              <button className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
-                <span className="text-gray-700 font-semibold text-sm">Google</span>
-                <svg width="18" height="18" viewBox="0 0 24 24">
-                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
-                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-                </svg>
-              </button>
+        {/* Title */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-[#1FA6BA]">تسجيل الدخول</h1>
+        </div>
 
-              <button className="w-full flex items-center justify-center gap-3 border border-gray-200 rounded-xl py-2.5 hover:bg-gray-50 transition-colors">
-                <span className="text-gray-700 font-semibold text-sm">App Store</span>
-                <Apple size={18} className="text-black fill-black" />
-              </button>
-
-              <div className="pt-2">
-                <button 
-                  onClick={() => setShowEmailForm(true)}
-                  className="w-full bg-[#087083] hover:bg-[#065b6a] text-white font-bold rounded-xl py-3 transition-colors text-sm"
-                >
-                  متابعة الدخول بإستخدام الايميل
-                </button>
+        <form onSubmit={handleLogin} className="space-y-5">
+          
+          {/* Email */}
+          <div className="space-y-2 text-right">
+            <label className="text-sm font-bold text-[#004e70] block">
+              البريد الإلكتروني
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Mail size={18} />
               </div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right placeholder-gray-400"
+                placeholder="user@user.gmail.com"
+                dir="ltr"
+              />
             </div>
-
-            <div className="mt-8 mb-2">
-              <p className="text-gray-400 text-xs font-semibold">
-                لدي حساب، <Link href="#" onClick={(e) => { e.preventDefault(); setShowEmailForm(true); }} className="text-[#087083] font-bold hover:underline">دخول</Link>
-              </p>
-            </div>
-          </>
-        ) : (
-          <div className="w-full">
-            <button 
-              onClick={() => setShowEmailForm(false)}
-              className="mb-6 flex items-center gap-2 text-gray-500 hover:text-[#087083] transition-colors text-sm font-semibold"
-            >
-              <ArrowRight size={16} /> عودة
-            </button>
-            
-            <h2 className="text-[#087083] text-xl font-bold text-center mb-6">تسجيل الدخول</h2>
-            
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-1.5">
-                <label className="text-sm font-bold text-gray-700 block">البريد الإلكتروني</label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                    <Mail size={18} />
-                  </div>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-[#087083] focus:ring-1 focus:ring-[#087083] outline-none transition-all text-sm"
-                    placeholder="name@example.com"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <div className="flex justify-between items-center">
-                  <label className="text-sm font-bold text-gray-700 block">كلمة المرور</label>
-                  <Link href="#" className="text-xs text-[#087083] hover:underline font-semibold">
-                    نسيت كلمة المرور؟
-                  </Link>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
-                    <Lock size={18} />
-                  </div>
-                  <input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="w-full pl-4 pr-10 py-2.5 rounded-xl border border-gray-200 focus:border-[#087083] focus:ring-1 focus:ring-[#087083] outline-none transition-all text-sm"
-                    placeholder="••••••••"
-                    dir="ltr"
-                  />
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full bg-[#087083] hover:bg-[#065b6a] text-white font-bold py-3 px-4 rounded-xl shadow-md shadow-[#087083]/20 transition-all transform active:scale-[0.98] disabled:opacity-70 flex justify-center items-center mt-6"
-              >
-                {isLoading ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                ) : (
-                  'دخول'
-                )}
-              </button>
-            </form>
           </div>
-        )}
+
+          {/* Password */}
+          <div className="space-y-2 text-right">
+            <label className="text-sm font-bold text-[#004e70] block">
+              كلمة المرور
+            </label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full pr-4 pl-12 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right tracking-widest placeholder:tracking-normal"
+                placeholder="••••••••"
+                dir="ltr"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 hover:text-gray-600"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+
+          {/* Forgot Password & Remember Me */}
+          <div className="flex items-center justify-between pt-1">
+            <Link href="/forgot-password" className="text-sm text-gray-500 hover:text-gray-700">
+              نسيت كلمة المرور؟
+            </Link>
+            <label className="flex items-center cursor-pointer gap-2">
+              <span className="text-sm text-gray-500">تذكرني</span>
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded text-[#1FA6BA] focus:ring-[#1FA6BA] border-gray-300"
+              />
+            </label>
+          </div>
+
+          {/* Error Message */}
+          {error && (
+            <div className="flex items-start gap-3 mt-4 text-[#ef4444] bg-white pt-2">
+              <div className="flex-1 text-right text-xs font-medium leading-relaxed">
+                {error}
+              </div>
+              <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            </div>
+          )}
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full bg-[#004e70] hover:bg-[#003d58] text-white font-bold py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 flex justify-center items-center mt-6"
+          >
+            {isLoading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+            ) : (
+              'ابدأ الآن'
+            )}
+          </button>
+        </form>
+
+        {/* Register Link */}
+        <div className="mt-4 text-center text-sm text-gray-500">
+          ليس لديك حساب{' '}
+          <Link href="/register" className="text-[#1FA6BA] font-bold hover:underline">
+            سجل هنا
+          </Link>
+        </div>
+
+        {/* Divider */}
+        <div className="w-full relative py-6 mt-2">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-dotted border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-3 bg-white text-gray-400">إنشاء حساب بواسطة</span>
+          </div>
+        </div>
+
+        {/* Social Buttons Row */}
+        <div className="flex gap-3 pb-8">
+          <button type="button" className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700">
+            <span className="text-sm">Google</span>
+            <FcGoogle size={20} />
+          </button>
+          
+          <button type="button" className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700">
+            <span className="text-sm">App Store</span>
+            <FaApple size={20} className="mb-1" />
+          </button>
+        </div>
+
       </div>
     </div>
   );

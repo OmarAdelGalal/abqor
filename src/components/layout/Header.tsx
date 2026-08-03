@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import AuthModal from '@/components/auth/AuthModal';
 
 export default function Header() {
@@ -20,12 +21,12 @@ export default function Header() {
             ABQOR
           </div>
           <div>
-            <button 
-              onClick={() => setIsAuthModalOpen(true)}
-              className="px-8 py-2.5 rounded-full font-bold text-white bg-[#1FA6BA] shadow-md hover:bg-[#188a9c] transition-all cursor-pointer"
+            <Link 
+              href="/onboarding"
+              className="px-8 py-2.5 rounded-full font-bold text-white bg-[#1FA6BA] shadow-md hover:bg-[#188a9c] transition-all cursor-pointer inline-block"
             >
               تسجيل الدخول
-            </button>
+            </Link>
           </div>
         </div>
       </header>

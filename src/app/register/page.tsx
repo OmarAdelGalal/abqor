@@ -1,134 +1,325 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { Mail, Lock, User, ArrowRight } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Mail, Lock, User, Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { FcGoogle } from 'react-icons/fc';
+import { FaApple } from 'react-icons/fa';
 
 export default function RegisterPage() {
-  const [name, setName] = useState('');
+  const router = useRouter();
+  
+  // State to toggle between splash view and detailed form view
+  const [showDetails, setShowDetails] = useState(false);
+
+  // Form state
   const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
   const [password, setPassword] = useState('');
+  const [gender, setGender] = useState<'male' | 'female' | null>('female');
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreed, setAgreed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  
+  const detailedEmailInputRef = useRef<HTMLInputElement>(null);
+
+  // Automatically focus the email input in the detailed view when it opens
+  useEffect(() => {
+    if (showDetails && detailedEmailInputRef.current) {
+      detailedEmailInputRef.current.focus();
+    }
+  }, [showDetails]);
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreed) {
+      alert('يجب الموافقة على الشروط والأحكام');
+      return;
+    }
+    
     setIsLoading(true);
     // Placeholder for actual API call
     setTimeout(() => {
       setIsLoading(false);
-      alert('تم إنشاء الحساب بنجاح! (محاكاة)');
+      alert('تم إنشاء الحساب بنجاح!');
+      router.push('/dashboard');
     }, 1500);
   };
 
-  return (
-    <div className="min-h-[calc(100vh-80px)] flex items-center justify-center bg-gradient-to-br from-background to-primary-light/30 p-4">
-      <div className="w-full max-w-md">
-        
-        {/* Back link */}
-        <Link href="/" className="inline-flex items-center gap-2 text-text-muted hover:text-primary mb-6 transition-colors">
-          <ArrowRight size={20} />
-          العودة للرئيسية
-        </Link>
+  const handleSplashSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // If they press enter on the splash screen, just show details
+    setShowDetails(true);
+  };
 
-        {/* Register Card */}
-        <div className="glass rounded-3xl p-8 shadow-2xl relative overflow-hidden">
-          {/* Decorative element */}
-          <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-primary to-purple-500"></div>
+  if (showDetails) {
+    return (
+      <div className="min-h-screen bg-white p-4" dir="rtl">
+        <div className="max-w-[400px] mx-auto w-full pt-4">
           
-          <div className="text-center mb-8 mt-2">
-            <h1 className="text-3xl font-extrabold text-text-main mb-2">إنشاء حساب جديد</h1>
-            <p className="text-text-muted">انضم إلى منصة عبقر وابدأ رحلتك التعليمية</p>
+          {/* Header / Back Button */}
+          <div className="flex items-center mb-8">
+            <button type="button" onClick={() => setShowDetails(false)} className="text-gray-800 hover:text-gray-600 transition-colors">
+              <ArrowRight size={24} />
+            </button>
           </div>
 
-          <form onSubmit={handleRegister} className="space-y-6">
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-text-main block">الاسم الكامل</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-text-muted">
-                  <User size={20} />
-                </div>
-                <input
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white/50 focus:bg-white"
-                  placeholder="محمد أحمد"
-                  dir="rtl"
-                />
+          {/* Title */}
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold text-[#1FA6BA]">بيانات إنشاء حساب</h1>
+          </div>
+
+          <form onSubmit={handleRegister} className="space-y-5">
+            
+            {/* Full Name */}
+            <div className="space-y-2 text-right">
+              <label className="flex items-center text-sm font-bold text-[#004e70] gap-2">
+                <User size={18} />
+                <span>الإسم بالكامل</span>
+              </label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right placeholder-gray-400"
+                placeholder="الإسم"
+              />
+            </div>
+
+            {/* Email */}
+            <div className="space-y-2 text-right">
+              <label className="flex items-center text-sm font-bold text-[#004e70] gap-2">
+                <Mail size={18} />
+                <span>البريد الإلكتروني</span>
+              </label>
+              <input
+                ref={detailedEmailInputRef}
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right placeholder-gray-400"
+                placeholder="user@user.gmail.com"
+                dir="ltr"
+              />
+            </div>
+
+            {/* Gender */}
+            <div className="space-y-2 text-right">
+              <label className="flex items-center text-sm font-bold text-[#004e70] gap-2">
+                <User size={18} />
+                <span>الجنس</span>
+              </label>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setGender('male')}
+                  className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                    gender === 'male' ? 'bg-[#48B3C4] text-white' : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  ذكر
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setGender('female')}
+                  className={`flex-1 py-3 rounded-xl font-medium transition-all ${
+                    gender === 'female' ? 'bg-[#48B3C4] text-white' : 'bg-gray-100 text-gray-700'
+                  }`}
+                >
+                  أنثى
+                </button>
               </div>
             </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-text-main block">البريد الإلكتروني</label>
+            {/* Password */}
+            <div className="space-y-2 text-right">
+              <label className="flex items-center text-sm font-bold text-[#004e70] gap-2">
+                <Lock size={18} />
+                <span>كلمة المرور</span>
+              </label>
               <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-text-muted">
-                  <Mail size={20} />
-                </div>
                 <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white/50 focus:bg-white"
-                  placeholder="name@example.com"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-sm font-bold text-text-main block">كلمة المرور</label>
-              <div className="relative">
-                <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-text-muted">
-                  <Lock size={20} />
-                </div>
-                <input
-                  type="password"
+                  type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full pl-4 pr-10 py-3 rounded-xl border border-gray-200 focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all bg-white/50 focus:bg-white"
+                  className="w-full pr-4 pl-12 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right tracking-widest placeholder:tracking-normal"
                   placeholder="••••••••"
                   dir="ltr"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute inset-y-0 left-0 pl-4 flex items-center text-gray-400 hover:text-gray-600"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
             </div>
 
+            {/* Terms & Conditions */}
+            <div className="flex items-center gap-2 pt-2">
+              <label className="flex items-center cursor-pointer gap-2">
+                <input
+                  type="checkbox"
+                  checked={agreed}
+                  onChange={(e) => setAgreed(e.target.checked)}
+                  className="w-5 h-5 rounded text-[#48B3C4] focus:ring-[#48B3C4] border-gray-300"
+                />
+                <span className="text-sm text-gray-500">
+                  أوافق على <span className="text-[#48B3C4] font-bold">الشروط والاحكام</span>
+                </span>
+              </label>
+            </div>
+
+            {/* Divider */}
+            <div className="w-full relative py-2">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-dotted border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-3 bg-white text-gray-400">إنشاء حساب بواسطة</span>
+              </div>
+            </div>
+
+            {/* Social Buttons Row */}
+            <div className="flex gap-3">
+              <button type="button" className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700">
+                <span className="text-sm">Google</span>
+                <FcGoogle size={20} />
+              </button>
+              
+              <button type="button" className="flex-1 flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700">
+                <span className="text-sm">App Store</span>
+                <FaApple size={20} className="mb-1" />
+              </button>
+            </div>
+
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full bg-primary hover:bg-primary-hover text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-primary/30 transition-all transform active:scale-[0.98] disabled:opacity-70 flex justify-center items-center h-[52px]"
+              className="w-full bg-[#004e70] hover:bg-[#003d58] text-white font-bold py-3.5 px-4 rounded-xl transition-all disabled:opacity-70 flex justify-center items-center mt-6"
             >
               {isLoading ? (
-                <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
-                'إنشاء حساب'
+                'تأكيد'
               )}
             </button>
           </form>
 
-          <div className="mt-8 pt-6 border-t border-gray-100 text-center">
-            <p className="text-text-muted text-sm mb-4">أو التسجيل باستخدام</p>
-            <div className="flex gap-4 justify-center">
-              <button type="button" className="p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex-1 flex justify-center items-center gap-2 font-semibold">
-                Github
-              </button>
-              <button type="button" className="p-3 rounded-xl border border-gray-200 hover:bg-gray-50 transition-colors flex-1 flex justify-center items-center gap-2 font-semibold text-blue-600">
-                <span className="font-extrabold text-xl">G</span>
-                Google
-              </button>
-            </div>
-            
-            <p className="mt-8 text-sm text-text-muted">
-              لديك حساب بالفعل؟{' '}
-              <Link href="/login" className="text-primary font-bold hover:underline">
-                سجل الدخول
-              </Link>
-            </p>
+          {/* Footer Link */}
+          <div className="mt-6 text-center text-sm text-gray-500 pb-8">
+            لدي حساب بالفعل{' '}
+            <Link href="/login" className="text-[#1FA6BA] font-bold hover:underline">
+              دخول
+            </Link>
           </div>
 
         </div>
+      </div>
+    );
+  }
+
+  // --- SPLASH VIEW ---
+  return (
+    <div className="min-h-[calc(100vh-80px)] flex flex-col items-center justify-center bg-white p-4" dir="rtl">
+      <div className="w-full max-w-[400px] flex flex-col items-center">
+        
+        {/* Character Illustration */}
+        <div className="mb-6">
+          <img 
+            src="/603878e1486a7e2012f3fae14f8205e3edcf979d.png" 
+            alt="Create Account" 
+            className="w-32 h-auto object-contain"
+            onError={(e) => { 
+              // Fallback to emoji if image is missing
+              e.currentTarget.outerHTML = '<div class="text-6xl text-center">👍</div>' 
+            }} 
+          />
+        </div>
+
+        {/* Headings */}
+        <div className="text-center mb-8">
+          <h1 className="text-2xl font-bold text-[#1FA6BA] mb-2">الآن قم بإنشاء حسابك في عبقور!</h1>
+          <p className="text-gray-500 text-sm leading-relaxed px-4">
+            إنها عملية سهلة و سريعة، و تمكنك من استخدام جميع دروس عبقور.
+          </p>
+        </div>
+
+        {/* Social Login */}
+        <div className="w-full relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-dotted border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-3 bg-white text-gray-400">إنشاء حساب بواسطة</span>
+          </div>
+        </div>
+
+        <div className="w-full space-y-3 mb-6">
+          <button type="button" className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700">
+            <span className="text-sm">Google</span>
+            <FcGoogle size={20} />
+          </button>
+          
+          <button type="button" className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-colors font-medium text-gray-700">
+            <span className="text-sm">App Store</span>
+            <FaApple size={20} className="mb-1" />
+          </button>
+        </div>
+
+        {/* Email Login */}
+        <div className="w-full relative mb-6">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-dotted border-gray-300"></div>
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-3 bg-white text-gray-400">المتابعة بالإيميل</span>
+          </div>
+        </div>
+
+        <form onSubmit={handleSplashSubmit} className="w-full space-y-5">
+          <div className="space-y-2 text-right">
+            <label className="text-sm font-bold text-[#004e70] block">بواسطة البريد الإلكتروني</label>
+            <div className="relative cursor-text" onClick={() => setShowDetails(true)}>
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+                <Mail size={18} />
+              </div>
+              {/* Using readOnly here so that clicking it triggers the click event and prevents the mobile keyboard from flashing before switching views */}
+              <input
+                type="email"
+                value={email}
+                readOnly
+                onFocus={() => setShowDetails(true)}
+                className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right placeholder-gray-400 cursor-text"
+                placeholder="user@usre.gmail.com"
+                dir="rtl"
+              />
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowDetails(true)}
+            className="w-full bg-[#004e70] hover:bg-[#003d58] text-white font-bold py-3.5 px-4 rounded-xl transition-all flex justify-center items-center"
+          >
+            متابعة
+          </button>
+        </form>
+
+        {/* Footer Link */}
+        <div className="mt-6 text-center text-sm text-gray-500">
+          لدي حساب،{' '}
+          <Link href="/login" className="text-[#1FA6BA] hover:underline">
+            دخول
+          </Link>
+        </div>
+
       </div>
     </div>
   );

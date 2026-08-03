@@ -1,0 +1,119 @@
+services:
+  db:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: abqor
+    ports:
+      - "3307:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    volumes:
+      - abqor_mysql:/var/lib/mysql
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_NAME: ABQOR
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_URL: http://localhost:8080
+      APP_KEY: base64:X4xfKmlAligF3AYGymo0hyqMs69s6UMnN794UQxoo+U=
+
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: abqor
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+      CACHE_DRIVER: database
+      QUEUE_CONNECTION: database
+      SESSION_DRIVER: file
+
+      # Live protection (recommended)
+      LIVE_PROTECTION_ENABLED: "true"
+      LIVE_PROTECTION_ENFORCE_ENTITLEMENT: "true"
+      LIVE_PROTECTION_SIGNATURE_TTL_SECONDS: "90"
+      LIVE_PROTECTION_ENFORCE_TIME_WINDOW: "true"
+      LIVE_PROTECTION_ISSUE_WINDOW_BEFORE_MINUTES: "15"
+      LIVE_PROTECTION_ISSUE_WINDOW_AFTER_MINUTES: "360"
+      LIVE_PROTECTION_ENABLE_RATE_LIMIT: "true"
+      LIVE_PROTECTION_RATE_LIMIT_MAX_ATTEMPTS: "10"
+      LIVE_PROTECTION_RATE_LIMIT_DECAY_SECONDS: "300"
+      LIVE_PROTECTION_REQUIRE_DEVICE_ID: "true"
+      LIVE_PROTECTION_ENFORCE_DEVICE_CONSISTENCY: "true"
+      LIVE_PROTECTION_DEVICE_BINDING_SCOPE: "user"
+
+      # Student device policy (1 mobile + 1 desktop)
+      DEVICE_POLICY_ENABLED: "true"
+      DEVICE_POLICY_REQUIRE_HEADERS: "true"
+      DEVICE_POLICY_MAX_MOBILE_DEVICES: "1"
+      DEVICE_POLICY_MAX_DESKTOP_DEVICES: "1"
+
+      # Zoom Meeting SDK (replace for real join)
+      ZOOM_MEETING_SDK_KEY: "test-key"
+      ZOOM_MEETING_SDK_SECRET: "test-secret"
+
+      # Seeder needs admin values
+      ADMIN_PHONE: "0000000000"
+      ADMIN_PASSWORD: "12345678"
+    command: >
+      sh -lc "
+        php artisan migrate --force &&
+        php artisan db:seed --force || true &&
+        php-fpm
+      "
+    volumes:
+      - abqor_storage:/var/www/html/storage
+
+  queue:
+    build: .
+    depends_on:
+      - app
+    environment:
+      APP_ENV: local
+      APP_KEY: base64:X4xfKmlAligF3AYGymo0hyqMs69s6UMnN794UQxoo+U=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: abqor
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      QUEUE_CONNECTION: database
+      CACHE_DRIVER: database
+    command: sh -lc "php artisan queue:work --tries=3 --sleep=1"
+    volumes:
+      - abqor_storage:/var/www/html/storage
+
+  std_zoom:
+    build:
+      context: ../../ABQOR_Zoom/ABQOR_Zoom-main
+      args:
+        VITE_ZOOM_SDK_KEY: "test-key"
+    volumes:
+      - abqor_std_zoom:/app/serve/
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - app
+      - std_zoom
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./public:/var/www/html/public:ro
+      - abqor_storage:/var/www/html/storage
+      - abqor_std_zoom:/home/std_zoom
+
+volumes:
+  abqor_mysql:
+  abqor_storage:
+  abqor_std_zoom:

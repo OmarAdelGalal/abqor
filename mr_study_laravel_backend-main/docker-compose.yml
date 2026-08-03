@@ -1,0 +1,137 @@
+version: '3'
+services:
+#http app
+  app:
+    build: .
+    volumes:
+      - mr_study_storage:/var/www/html/storage
+      - ./public:/var/www/html/public
+      - ./.env:/var/www/html/.env
+      # - ./fpm.conf:/usr/local/etc/php-fpm.d/www.conf
+    networks:
+      - mr_study
+    depends_on:
+      - database
+    environment:
+      DB_HOST: db
+      REDIS_HOST: redis
+
+    command:  php-fpm
+    restart: always
+
+  #websocket app
+  app_ws:
+    build: .
+    volumes:
+      - ./.env:/var/www/html/.env
+    networks:
+      - mr_study
+    depends_on:
+      - database
+    environment:
+      REDIS_HOST: redis
+      DB_HOST: db
+    command:  php artisan websocket:serve
+    restart: always
+
+  #queue runer
+  app_queue:
+    build: .
+    volumes:
+      - mr_study_storage:/var/www/html/storage
+      - ./.env:/var/www/html/.env
+
+    networks:
+      - mr_study
+    depends_on:
+      - database
+      - redis
+    environment:
+      REDIS_HOST: redis
+      DB_HOST: db
+      
+    command:  php artisan queue:work
+    restart: always
+
+  #schdule runer
+  app_schdule:
+    build: .
+    volumes:
+      - ./.env:/var/www/html/.env
+
+    networks:
+      - mr_study
+    environment:
+      REDIS_HOST: redis
+      DB_HOST: db
+      
+    depends_on:
+      - database
+    command: php artisan schedule:work
+    restart: always
+
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+      - ./public:/var/www/html/public
+      - mr_study_storage:/var/www/html/storage
+      - ./.ssl:/etc/nginx/ssl_cert:ro # cert synlinks
+      - ./letsencrypt:/etc/letsencrypt:ro #cert files
+      - ./certbot-www:/var/www/certbot  # Shared volume for webroot validation
+      - mr_study_dashboard:/home/admin_portal/
+      - mr_study_std_zoom:/home/std_zoom/
+
+    depends_on:
+      - app
+    networks:
+      - mr_study
+  database:
+    image: mysql
+    networks:
+      mr_study:
+        aliases:
+          - db  
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_DATABASE}
+      MYSQL_ALLOW_EMPTY_PASSWORD: yes
+    volumes:
+     - mr_study_data:/var/lib/mysql  
+
+ 
+  dashboard:
+    build:
+      context: ${DASHBOARD_PATH}
+      args:
+        VITE_API_URL: ${VITE_API_URL}
+        VITE_STORAGE_URL: ${VITE_STORAGE_URL}
+
+    volumes:
+      - mr_study_dashboard:/app/serve/
+  std_zoom:
+    build:
+      context: ${STD_ZOOM_PATH}
+      args:
+        VITE_ZOOM_SDK_KEY: ${ZOOM_MEETING_SDK_KEY}
+
+    volumes:
+      - mr_study_std_zoom:/app/serve/
+
+  redis:
+    image: redis
+    networks:
+      - mr_study
+networks:
+  mr_study:
+
+volumes:
+  mr_study_data:
+  mr_study_dashboard:
+  mr_study_std_zoom:
+  mr_study_storage:

@@ -680,10 +680,15 @@ export default function CourseDetailsPage() {
                                      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[8px] font-black text-red-500 bg-white px-1 rounded-sm border border-red-100">PDF</div>
                                      <FileText className="w-5 h-5 text-gray-400 group-hover:text-red-400 transition-colors" />
                                   </div>
-                                ) : (
-                                  <div className="relative w-10 h-8 flex items-center justify-center">
+                                ) : (lesson.quiz || lesson.questions_bank_id) ? (
+                                  <div className="relative w-10 h-8 flex items-center justify-center" onClick={(e) => {
+                                    // Prevent selecting the lesson video if they click the quiz badge specifically
+                                    e.stopPropagation();
+                                    // Quiz navigation will be implemented here when destination is decided
+                                    alert("سيتم نقلك لصفحة الاختبار قريباً");
+                                  }}>
                                     {/* Quiz Icon */}
-                                    <div className="w-8 h-6 bg-[#38b6c7] rounded-md flex items-center justify-center relative shadow-sm">
+                                    <div className="w-8 h-6 bg-[#38b6c7] rounded-md flex items-center justify-center relative shadow-sm hover:scale-105 transition-transform">
                                       <span className="text-white text-[8px] font-black">QUIZ</span>
                                       {/* Speech bubble tail */}
                                       <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-2 h-2 bg-[#38b6c7] rotate-45"></div>
@@ -693,7 +698,7 @@ export default function CourseDetailsPage() {
                                       <span className="text-white text-[10px] font-black">?</span>
                                     </div>
                                   </div>
-                                )}
+                                ) : null}
                                 
                                 {/* Status Icon (Lock or Play/Pause) */}
                                 {isSubscribed ? (

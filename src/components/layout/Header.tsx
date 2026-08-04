@@ -2,16 +2,23 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import AuthModal from '@/components/auth/AuthModal';
 
 export default function Header() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const pathname = usePathname();
+  
+  const authRoutes = ['/dashboard', '/learning', '/account', '/notifications'];
+  const isAuthRoute = authRoutes.some(route => pathname?.startsWith(route));
 
   useEffect(() => {
     const handleOpen = () => setIsAuthModalOpen(true);
     window.addEventListener('open-auth-modal', handleOpen);
     return () => window.removeEventListener('open-auth-modal', handleOpen);
   }, []);
+
+  if (isAuthRoute) return null;
 
   return (
     <>

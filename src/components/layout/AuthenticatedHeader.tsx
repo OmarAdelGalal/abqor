@@ -4,7 +4,13 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
-export default function AuthenticatedHeader() {
+interface AuthenticatedHeaderProps {
+  health?: number;
+  diamonds?: number;
+  flame?: number;
+}
+
+export default function AuthenticatedHeader({ health = 0, diamonds = 0, flame = 0 }: AuthenticatedHeaderProps) {
   const pathname = usePathname();
 
   const navItems = [
@@ -20,7 +26,9 @@ export default function AuthenticatedHeader() {
         {/* Right Side: Navigation Tabs */}
         <div className="flex items-center gap-2">
           {navItems.map((item) => {
-            const isActive = pathname === item.path;
+            const isActive = 
+              pathname === item.path || 
+              (item.path === '/dashboard' && pathname === '/curriculum');
             const Icon = item.icon;
             return (
               <Link
@@ -54,17 +62,17 @@ export default function AuthenticatedHeader() {
 
           <div className="flex items-center gap-4 text-sm font-bold">
             <div className="flex items-center gap-1.5 text-gray-700">
-              <span>7</span>
+              <span>{health}</span>
               <img src="/home/hart icon.png" alt="Heart" className="w-4 h-4 object-contain" />
             </div>
             <div className="h-4 w-[1px] bg-gray-300"></div>
             <div className="flex items-center gap-1.5 text-gray-700">
-              <span>471</span>
+              <span>{diamonds}</span>
               <img src="/home/dimond icon.png" alt="Diamond" className="w-4 h-4 object-contain" />
             </div>
             <div className="h-4 w-[1px] bg-gray-300"></div>
             <div className="flex items-center gap-1.5 text-gray-700">
-              <span>8</span>
+              <span>{flame}</span>
               <img src="/home/fire icon.png" alt="Flame" className="w-4 h-4 object-contain" />
             </div>
           </div>
@@ -72,9 +80,9 @@ export default function AuthenticatedHeader() {
 
         {/* Left Side: Logo & Bell */}
         <div className="flex items-center gap-6">
-          <button className="relative w-10 h-10 flex items-center justify-center bg-yellow-50 rounded-full hover:bg-yellow-100 transition-colors">
+          <Link href="/notifications" className="relative w-10 h-10 flex items-center justify-center bg-yellow-50 rounded-full hover:bg-yellow-100 transition-colors">
             <img src="/home/notifction icon.png" alt="Notifications" className="w-5 h-5 object-contain" />
-          </button>
+          </Link>
           
           <Link href="/dashboard" className="text-3xl font-black text-[#004e70] tracking-wider uppercase">
             ABQOR

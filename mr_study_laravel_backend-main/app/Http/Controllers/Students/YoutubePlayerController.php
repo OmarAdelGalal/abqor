@@ -134,11 +134,13 @@ class YoutubePlayerController extends Controller
             );
         }
 
+        $deviceId = $request->header('X-Device-Id') ?? $request->header('X-Device-ID') ?? $validated['device_id'] ?? null;
+
         // Generate one-time token (valid for 5 minutes)
         $videoToken = VideoToken::generateToken(
             userId: $user->id,
             lectureId: $lecture->id,
-            deviceId: $validated['device_id'] ?? null,
+            deviceId: $deviceId,
             expiryMinutes: 5
         );
 

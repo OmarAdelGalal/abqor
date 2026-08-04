@@ -7,6 +7,7 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { FcGoogle } from 'react-icons/fc';
 import { FaApple } from 'react-icons/fa';
 import { authApi } from '@/lib/auth';
+import { useAuthStore } from '@/store/useAuthStore';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -23,21 +24,27 @@ export default function LoginPage() {
     setIsLoading(true);
     
     try {
-      // Real API Call
+      // api.ts interceptor unwraps the envelope, so 'data' IS the inner data object
+      // Backend login returns: { token, id, name, email, role, ... }
       const data = await authApi.login({ email, password });
-      
-      // Save the token if the backend returns one (e.g., inside data.token or data.user.token)
-      if (data && data.token) {
-        localStorage.setItem('abqor_token', data.token);
-      } else if (data && data.user && data.user.token) {
-        localStorage.setItem('abqor_token', data.user.token);
-      }
 
-      // Success
-      router.push('/dashboard');
+      const token = data?.token;
+      if (token) {
+        // Persist to both localStorage and Zustand store
+        useAuthStore.getState().setAuth(token, {
+          id: data.id,
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          role: data.role,
+          avatar: data.avatar,
+        });
+        router.push('/dashboard');
+      } else {
+        setError('استجابة غير متوقعة من الخادم. يرجى المحاولة مرة أخرى.');
+      }
     } catch (err: any) {
       console.error("Login Error:", err);
-      // Display the real error message from the backend (or fallback to generic if network failed)
       setError(err.message || 'حدث خطأ أثناء الاتصال بالخادم. يرجى المحاولة مرة أخرى.');
     } finally {
       setIsLoading(false);
@@ -68,7 +75,7 @@ export default function LoginPage() {
               البريد الإلكتروني
             </label>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-gray-400">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
                 <Mail size={18} />
               </div>
               <input
@@ -76,7 +83,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right placeholder-gray-400"
+                className="w-full pr-10 pl-4 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right placeholder-gray-400"
                 placeholder="user@user.gmail.com"
                 dir="ltr"
               />
@@ -89,12 +96,15 @@ export default function LoginPage() {
               كلمة المرور
             </label>
             <div className="relative">
+              <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none text-gray-400">
+                <Lock size={18} />
+              </div>
               <input
                 type={showPassword ? 'text' : 'password'}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full pr-4 pl-12 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right tracking-widest placeholder:tracking-normal"
+                className="w-full pr-10 pl-12 py-3 rounded-xl border border-gray-200 focus:border-[#1FA6BA] focus:ring-1 focus:ring-[#1FA6BA] outline-none transition-all bg-white text-right tracking-widest placeholder:tracking-normal"
                 placeholder="••••••••"
                 dir="ltr"
               />

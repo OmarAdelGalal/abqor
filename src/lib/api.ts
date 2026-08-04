@@ -1,8 +1,10 @@
 import axios, { AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { getOrCreateDeviceId } from './api/deviceIdentifier';
+import { useAuthStore } from '../store/useAuthStore';
 
-// The base URL for the backend API
-// Ensure this points to the real backend server URL when deploying
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+// Hardcoding to the Next.js proxy to bypass CORS and Turbopack .env cache
+const API_BASE_URL = '/proxy-api';
+console.log("API_BASE_URL being used:", API_BASE_URL);
 
 // Define the universal response envelope expected from the backend
 export interface ApiResponse<T = any> {
@@ -14,7 +16,7 @@ export interface ApiResponse<T = any> {
 }
 
 // Create the Axios instance
-const api: AxiosInstance = axios.create({
+const api: any = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
@@ -22,21 +24,44 @@ const api: AxiosInstance = axios.create({
   },
 });
 
-// Request Interceptor: Attach the Bearer token
+// Request interceptor
 api.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // We only access localStorage on the client side
     if (typeof window !== 'undefined') {
       const token = localStorage.getItem('abqor_token');
       if (token) {
-        // Assumption: The backend uses Bearer tokens in the Authorization header
-        // This must be verified with the backend developer as noted in the plan
-        config.headers.Authorization = `Bearer ${token}`;
+        config.headers.set('Authorization', `Bearer ${token}`);
       }
+      
+      const deviceId = getOrCreateDeviceId();
+      config.headers.set('X-Device-Id', deviceId);
+      
+      // Determine device class based on viewport (simplified heuristic)
+      const deviceClass = window.innerWidth <= 768 ? 'mobile' : 'desktop';
+      config.headers.set('X-Device-Class', deviceClass);
     }
     return config;
   },
-  (error) => Promise.reject(error)
+  (error: any) => {
+    return Promise.reject(error);
+  }
+);
+
+// Response interceptor
+api.interceptors.response.use(
+  (response: AxiosResponse) => response,
+  (error: any) => {
+    if (error.response && typeof window !== 'undefined') {
+      const { status, data } = error.response;
+      
+      // Handle session revocation (Zero-Trust device policy)
+      if (status === 401 || status === 403 || data?.code === 'DEVICE_MISMATCH') {
+        useAuthStore.getState().logout();
+        window.location.href = '/onboarding';
+      }
+    }
+    return Promise.reject(error);
+  }
 );
 
 // Response Interceptor: Unwrap the custom envelope
@@ -44,8 +69,16 @@ api.interceptors.response.use(
   (response: AxiosResponse<ApiResponse>) => {
     const apiResponse = response.data;
     
-    // If the backend returns a 200 HTTP status but isSuccess is false, treat it as an error
-    if (!apiResponse.isSuccess) {
+    // If the backend explicitly returns isSuccess = false, treat it as an error
+    if (apiResponse && typeof apiResponse.isSuccess !== 'undefined' && !apiResponse.isSuccess) {
+      // Global Auth Error Handler (Token expired or invalid)
+      if (apiResponse.message === 'authentication error' || apiResponse.code === 'UNAUTHENTICATED') {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('abqor_token');
+          window.location.href = '/login';
+        }
+      }
+
       return Promise.reject({
         code: apiResponse.code,
         message: apiResponse.message,
@@ -53,17 +86,31 @@ api.interceptors.response.use(
       });
     }
 
-    // Return the unwrapped data for easier consumption in the components
-    return apiResponse.data as any;
+    // If it has the envelope, return unwrapped data. Otherwise, return raw apiResponse.
+    if (apiResponse && typeof apiResponse.isSuccess !== 'undefined') {
+      return apiResponse.data as any;
+    }
+    
+    return apiResponse;
   },
-  (error) => {
+  (error: any) => {
     // Handle standard HTTP errors (4xx, 5xx) that might still follow the envelope format
-    if (error.response && error.response.data) {
-      const apiResponse = error.response.data as ApiResponse;
+    if (error.response) {
+      const apiResponse = error.response.data as any;
+      
+      // Global Auth Error Handler for 401s
+      if (error.response.status === 401 || apiResponse?.message === 'authentication error') {
+        if (typeof window !== 'undefined') {
+          localStorage.removeItem('abqor_token');
+          window.location.href = '/login';
+        }
+      }
+
       return Promise.reject({
-        code: apiResponse.code || 'UNKNOWN_ERROR',
-        message: apiResponse.message || error.message,
-        data: apiResponse.data,
+        status: error.response.status,
+        code: apiResponse?.code || 'HTTP_ERROR',
+        message: apiResponse?.message || error.message || "Unknown Error",
+        data: apiResponse?.data || apiResponse,
       });
     }
     

@@ -1,7 +1,11 @@
 import React from 'react';
-import { Flame, CheckCircle2 } from 'lucide-react';
+import { CheckCircle2 } from 'lucide-react';
 
-export default function StreakWidget() {
+interface StreakWidgetProps {
+  flame?: number;
+}
+
+export default function StreakWidget({ flame = 0 }: StreakWidgetProps) {
   const days = [
     { label: 'سبت', checked: true },
     { label: 'أحد', checked: false },
@@ -21,7 +25,7 @@ export default function StreakWidget() {
           <span className="text-gray-600 font-bold text-sm">أيام الحماس</span>
           <img src="/home/fire icon.png" alt="Flame" className="w-5 h-5 object-contain" />
         </div>
-        <div className="text-3xl font-black text-[#004e70]">8</div>
+        <div className="text-3xl font-black text-[#004e70]">{flame}</div>
       </div>
       
       {/* Subtitle */}

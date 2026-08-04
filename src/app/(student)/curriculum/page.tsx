@@ -1,31 +1,56 @@
-import React from 'react';
+'use client';
+
+import React, { useEffect, useState } from 'react';
 import AuthenticatedHeader from '@/components/layout/AuthenticatedHeader';
 import StreakWidget from '@/components/dashboard/StreakWidget';
 import RankWidget from '@/components/dashboard/RankWidget';
 import UpgradeWidget from '@/components/dashboard/UpgradeWidget';
-import ExamCountdownHero from '@/components/dashboard/ExamCountdownHero';
-import ServicesRow from '@/components/dashboard/ServicesRow';
-import MoreServicesGrid from '@/components/dashboard/MoreServicesGrid';
+import CurriculumMap from '@/components/dashboard/CurriculumMap';
 import { FaFacebookF, FaInstagram, FaTelegramPlane, FaYoutube } from 'react-icons/fa';
+import { authApi } from '@/lib/auth';
 
-export default function DashboardPage() {
+export default function CurriculumPage() {
+  const [stats, setStats] = useState({ health: 0, diamonds: 0, flame: 0 });
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        const token = localStorage.getItem('abqor_token');
+        if (token) {
+          const authRaw = await authApi.autoLogin(token);
+          const authRes = authRaw?.data?.data || authRaw?.data || authRaw;
+          
+          if (authRes) {
+            setStats({
+              health: authRes?.health || 0,
+              diamonds: authRes?.diamonds || 0,
+              flame: authRes?.flame || 0
+            });
+          }
+        }
+      } catch (err: any) {
+        console.error("Failed to load curriculum header data", err?.message || err);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
   return (
     <div className="min-h-screen bg-white font-sans text-text-main" dir="rtl">
-      <AuthenticatedHeader />
+      <AuthenticatedHeader health={stats.health} diamonds={stats.diamonds} flame={stats.flame} />
       
       <main className="container mx-auto px-4 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
           
           {/* Main Content Area (Right side in RTL) */}
-          <div className="flex flex-col gap-6">
-            <ExamCountdownHero />
-            <ServicesRow />
-            <MoreServicesGrid />
+          <div className="flex flex-col gap-6 w-full relative">
+            <CurriculumMap />
           </div>
 
           {/* Sidebar Area (Left side in RTL) */}
           <div className="flex flex-col gap-4">
-            <StreakWidget />
+            <StreakWidget flame={stats.flame} />
             <RankWidget />
             <UpgradeWidget />
             

@@ -3,7 +3,33 @@
 import React from 'react';
 import { Share2, ChevronRight } from 'lucide-react';
 
-export default function ExamCountdownHero() {
+interface ExamCountdownHeroProps {
+  bacDate?: string;
+}
+
+export default function ExamCountdownHero({ bacDate }: ExamCountdownHeroProps) {
+  const [timeLeft, setTimeLeft] = React.useState({ days: 215, hours: 28, minutes: 15, seconds: 32 });
+
+  React.useEffect(() => {
+    if (!bacDate) return;
+    
+    const calculateTimeLeft = () => {
+      const difference = new Date(bacDate).getTime() - new Date().getTime();
+      if (difference > 0) {
+        setTimeLeft({
+          days: Math.floor(difference / (1000 * 60 * 60 * 24)),
+          hours: Math.floor((difference / (1000 * 60 * 60)) % 24),
+          minutes: Math.floor((difference / 1000 / 60) % 60),
+          seconds: Math.floor((difference / 1000) % 60),
+        });
+      }
+    };
+    
+    calculateTimeLeft();
+    const timer = setInterval(calculateTimeLeft, 1000);
+    return () => clearInterval(timer);
+  }, [bacDate]);
+
   return (
     <div className="bg-[#48B3C4] rounded-3xl p-6 w-full text-white relative overflow-hidden flex flex-col md:flex-row items-center justify-between min-h-[220px]">
       
@@ -29,34 +55,34 @@ export default function ExamCountdownHero() {
       {/* Right Side: Title and Timer */}
       <div className="flex flex-col items-end z-10 w-full md:w-1/2 mt-4 md:mt-0 px-4 md:px-12 text-right order-2 md:order-1">
         <h2 className="text-2xl md:text-3xl font-black mb-6 leading-tight">
-          بقي على إمتحان <br/> البكالوريا دورة 2025
+          بقي على إمتحان <br/> البكالوريا دورة {bacDate ? new Date(bacDate).getFullYear() : '2025'}
         </h2>
         
         <div className="flex items-center gap-3 dir-ltr font-bold text-center flex-row-reverse">
           <div className="flex flex-col items-center">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-2xl md:text-3xl font-black mb-1">
-              32
+              {timeLeft.seconds}
             </div>
             <span className="text-xs">ثانية</span>
           </div>
           <span className="text-2xl font-black pb-4">:</span>
           <div className="flex flex-col items-center">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-2xl md:text-3xl font-black mb-1">
-              15
+              {timeLeft.minutes}
             </div>
             <span className="text-xs">دقيقة</span>
           </div>
           <span className="text-2xl font-black pb-4">:</span>
           <div className="flex flex-col items-center">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-2xl md:text-3xl font-black mb-1">
-              28
+              {timeLeft.hours}
             </div>
             <span className="text-xs">ساعة</span>
           </div>
           <span className="text-2xl font-black pb-4">:</span>
           <div className="flex flex-col items-center">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl px-4 py-2 text-2xl md:text-3xl font-black mb-1">
-              215
+              {timeLeft.days}
             </div>
             <span className="text-xs">يوم</span>
           </div>

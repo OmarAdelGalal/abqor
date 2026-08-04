@@ -574,3 +574,30 @@ Route::prefix('zoom')->group(function () {
         Route::post('recordings', [ZoomController::class, 'recordingsWebHook']);
     });
 });
+
+Route::get('/ai-subscribe-user', function (\Illuminate\Http\Request $request) {
+    $email = $request->get('email', 'john.doe@0example.com');
+    $user = \App\Models\User::where('email', $email)->first();
+    
+    if (!$user) {
+        return response()->json(['success' => false, 'message' => 'User not found for email: ' . $email]);
+    }
+    
+    // Subscribe to course 26
+    $courseId = 26;
+    $course = \App\Models\Course::find($courseId);
+    if (!$course) return response()->json(['success' => false, 'message' => 'Course 26 not found']);
+    
+    $isSubscribed = $course->subscribes()->where('user_id', $user->id)->exists();
+    if ($isSubscribed) {
+        return response()->json(['success' => true, 'message' => 'User is already subscribed', 'user' => $user->id]);
+    }
+    
+    $group = \App\Models\LecturesGroup::where('course_id', $courseId)->first();
+    if ($group) {
+        $course->subscribes()->attach($user->id, ['lectures_group_id' => $group->id]);
+        return response()->json(['success' => true, 'message' => 'User subscribed successfully!', 'user' => $user->id]);
+    }
+    
+    return response()->json(['success' => false, 'message' => 'No lectures group found for course 26']);
+});

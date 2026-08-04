@@ -1,38 +1,60 @@
 import api from './api';
 
+let handshakePromise: Promise<any> | null = null;
+
 export const coursesApi = {
-  // Course Catalog
   getAllCourses: async () => {
     return await api.get('/user/courses');
   },
 
+  getSubjects: async () => {
+    return await api.get('/user/general/teachers_by_subject');
+  },
+
   getMyCourses: async (page: number = 1) => {
-    return await api.get(`/user/courses/my_courses/?page=${page}`);
+    return await api.get('/user/courses/my_courses/', { params: { page } });
   },
 
   getCourseDetails: async (id: number | string) => {
     return await api.get(`/user/courses/${id}`);
   },
 
-  getLessonList: async (lessonId: number | string, groupId: number | string) => {
-    return await api.get(`/user/courses/lectures_group/lesson/${lessonId}?group_id=${groupId}`);
+  getLecturesGroup: async (type: string, courseId: number | string, groupId?: number | string) => {
+    return await api.get(`/user/courses/lectures_group/${type}/${courseId}${groupId ? `?group_id=${groupId}` : ''}`);
   },
 
   getCoursePdf: async (id: number | string) => {
-    return await api.get(`/user/courses/get_pdf/${id}`);
+    return await api.get(`/user/courses/get_pdf/${id}`, { responseType: 'blob' });
   },
 
   getLecturePdf: async (id: number | string) => {
-    return await api.get(`/user/courses/lecture_pdf/${id}`);
+    return await api.get(`/user/courses/lecture_pdf/${id}`, { responseType: 'blob' });
   },
 
   finishCourse: async (id: number | string) => {
     return await api.post(`/user/courses/finish/${id}`);
   },
 
+  getCourseQuestions: async (id: number | string) => {
+    return await api.get(`/user/courses/questions/${id}`);
+  },
+
+  getCourseReviews: async (id: number | string) => {
+    return await api.get(`/user/courses/get_reviews/${id}`);
+  },
+
+  getCoursePayInfo: async (id: number | string) => {
+    return await api.get(`/user/courses/pay_info/${id}`);
+  },
+
+  getCourseBySlug: async (slug: string) => {
+    return await api.get(`/user/courses/link/${slug}`);
+  },
+
   // Video Playback
   getLiveMeeting: async (id: number | string) => {
-    return await api.get(`/user/courses/meeting/${id}`);
+    // Backend: POST /user/courses/meeting/{lecture} (requires auth + device)
+    return await api.post(`/user/courses/meeting/${id}`);
   },
 
   getYoutubeLecture: async (lectureId: number | string) => {
@@ -40,11 +62,18 @@ export const coursesApi = {
   },
 
   getSelfHostedVideo: async (lectureId: number | string) => {
-    return await api.post('/user/courses/lectureVideoPath', { lectureId });
+    // Backend: POST /user/courses/recorded-lecture-path  body: { lecture_id }
+    return await api.post('/user/courses/recorded-lecture-path', { lecture_id: lectureId });
   },
 
   getVideoHandshake: async () => {
-    return await api.post('/video/handshake');
+    if (!handshakePromise) {
+      handshakePromise = api.post('/video/handshake').catch(err => {
+        handshakePromise = null; // reset if it failed so we can retry later
+        throw err;
+      });
+    }
+    return await handshakePromise;
   },
 
   getRecordedPlayback: async (id: number | string) => {

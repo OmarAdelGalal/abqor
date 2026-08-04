@@ -6,7 +6,8 @@ export const dashboardApi = {
   },
 
   getProfile: async () => {
-    return await api.get('/user/account/profile');
+    // Backend route: GET /user/account (same as getUserProfile)
+    return await api.get('/user/account');
   },
 
   getBacTime: async () => {
@@ -15,5 +16,9 @@ export const dashboardApi = {
 
   getBooks: async () => {
     return await api.get('/user/general/books');
+  },
+
+  getNotifications: async (page: number = 1) => {
+    return await api.get(`/user/general/notifications?page=${page}`);
   }
 };

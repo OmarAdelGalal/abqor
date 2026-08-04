@@ -38,11 +38,13 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       const data = await response.json();
 
       if (response.ok && data.isSuccess) {
-        if (data.data?.token) {
-          localStorage.setItem('token', data.data.token);
-          alert('تم تسجيل الدخول بنجاح!');
-          onClose(); // Close modal on success
-          router.push('/'); // refresh state or navigate
+        // api route passes envelope through, so token is at data.data.token
+        const token = data?.data?.token;
+        if (token) {
+          // Use same key as the rest of the app ('abqor_token')
+          localStorage.setItem('abqor_token', token);
+          onClose();
+          router.push('/dashboard');
         } else {
           alert('فشل تسجيل الدخول: استجابة غير صالحة من الخادم');
         }

@@ -43,11 +43,11 @@ export const authApi = {
 
   // Onboarding Data
   fetchEducationLevels: async () => {
-    return await api.post('/user/auth/fetch-education-levels');
+    return await api.get('/user/auth/education_levels'); // GET, not POST
   },
 
-  fetchEducationYears: async () => {
-    return await api.post('/user/auth/education_years');
+  fetchEducationYears: async (params?: { education_level_id?: number; education_major_id?: number }) => {
+    return await api.get('/user/auth/education_years', { params }); // GET, not POST
   },
 
   fetchEducationMajors: async () => {
@@ -56,5 +56,9 @@ export const authApi = {
 
   updateProgram: async (data: any) => {
     return await api.post('/user/account/update_program', data);
+  },
+
+  getUserProfile: async () => {
+    return await api.get('/user/account');
   }
 };

@@ -386,7 +386,7 @@ export default function EditProfilePage() {
                     className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors bg-white appearance-none text-right"
                   >
                     <option value="" disabled>اختر السنة</option>
-                    {educationYears.filter(y => !educationLevel || y.education_level_id.toString() === educationLevel).map((yr) => (
+                    {educationYears.filter(y => !educationLevel || y.education_level_id?.toString() === educationLevel).map((yr) => (
                       <option key={yr.id} value={yr.id}>{yr.name}</option>
                     ))}
                   </select>

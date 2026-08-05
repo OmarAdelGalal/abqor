@@ -98,10 +98,10 @@ export default function AuthenticatedHeader({ health: propsHealth, diamonds: pro
               <img src="/home/hart icon.png" alt="Heart" className="w-4 h-4 object-contain" />
             </div>
             <div className="h-4 w-[1px] bg-gray-300"></div>
-            <div className="flex items-center gap-1.5 text-gray-700">
+            <Link href="/profile/wallet" className="flex items-center gap-1.5 text-gray-700 hover:opacity-70 transition-opacity cursor-pointer">
               <span>{stats.diamonds}</span>
               <img src="/home/dimond icon.png" alt="Diamond" className="w-4 h-4 object-contain" />
-            </div>
+            </Link>
             <div className="h-4 w-[1px] bg-gray-300"></div>
             <div className="flex items-center gap-1.5 text-gray-700">
               <span>{stats.flames}</span>

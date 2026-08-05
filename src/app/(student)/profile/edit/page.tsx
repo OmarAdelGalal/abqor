@@ -21,7 +21,8 @@ import {
   EyeOff,
   BookOpen,
   MapPin,
-  ChevronDown
+  ChevronDown,
+  Wallet
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
@@ -195,6 +196,7 @@ export default function EditProfilePage() {
 
   const menuItems = [
     { title: 'تعديل الحساب', icon: <UserPen className="w-5 h-5" />, href: '/profile/edit', color: 'text-orange-500' },
+    { title: 'المحفظة', icon: <Wallet className="w-5 h-5" />, href: '/profile/wallet', color: 'text-[#45B7C7]' },
     { title: 'آراء التلاميذ', icon: <MessageSquareHeart className="w-5 h-5" />, href: '/reviews', color: 'text-yellow-500' },
     { title: 'الاشتراكات', icon: <CreditCard className="w-5 h-5" />, href: '/subscriptions', color: 'text-blue-500' },
     { title: 'من نحن', icon: <Users className="w-5 h-5" />, href: '/about', color: 'text-slate-700' },

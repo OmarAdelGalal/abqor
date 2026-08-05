@@ -92,18 +92,26 @@ export default function CurriculumNode({ quiz, isActive, isLocked, index }: Curr
 
           <div className="w-full flex flex-col gap-2 mt-1">
             <Link 
-              href={`/learning/course/${quiz.id}`} 
+              href={`/quiz/${quiz.id}`} 
+              onClick={() => {
+                if (typeof window !== 'undefined') {
+                  localStorage.setItem('currentQuizData', JSON.stringify(quiz));
+                }
+              }}
               className="w-full bg-white text-[#45B7C7] text-center font-bold py-2.5 rounded-lg hover:bg-gray-50 transition-colors shadow-sm"
             >
               ابدا الان
             </Link>
-            <button className="w-full bg-[#fbbf24] text-white flex items-center justify-center gap-2 font-bold py-2.5 rounded-lg hover:bg-yellow-500 transition-colors shadow-sm">
+            <Link 
+              href={`/learning/course/${quiz.course_id || quiz.lesson_id || quiz.id}`}
+              className="w-full bg-[#fbbf24] text-white flex items-center justify-center gap-2 font-bold py-2.5 rounded-lg hover:bg-yellow-500 transition-colors shadow-sm"
+            >
               <span>شرح الدرس</span>
               <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <circle cx="12" cy="12" r="11" fill="white" stroke="#ef4444" strokeWidth="1.5"/>
                 <path d="M10 8L16 12L10 16V8Z" fill="#ef4444"/>
               </svg>
-            </button>
+            </Link>
           </div>
         </div>
       )}

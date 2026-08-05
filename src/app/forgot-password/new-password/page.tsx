@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
+import { authApi } from '@/lib/auth';
 
 export default function NewPasswordPage() {
   const router = useRouter();
@@ -12,8 +13,21 @@ export default function NewPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    const savedEmail = localStorage.getItem('forgotPasswordEmail');
+    const savedCode = localStorage.getItem('resetOtp');
+    if (savedEmail && savedCode) {
+      setEmail(savedEmail);
+      setCode(savedCode);
+    } else {
+      router.push('/forgot-password');
+    }
+  }, [router]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (password !== confirmPassword) {
@@ -27,26 +41,39 @@ export default function NewPasswordPage() {
     }
 
     setIsLoading(true);
-    // Simulating API call
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await authApi.resetPassword({
+        email,
+        code,
+        password,
+        password_confirmation: confirmPassword
+      });
       alert('تم تغيير كلمة المرور بنجاح!');
+      localStorage.removeItem('forgotPasswordEmail');
+      localStorage.removeItem('resetOtp');
       router.push('/login');
-    }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      if (err.response?.data?.message) {
+         alert(err.response.data.message);
+      } else {
+         alert('حدث خطأ أثناء تغيير كلمة المرور');
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-white p-4" dir="rtl">
       <div className="max-w-[400px] mx-auto w-full pt-4">
         
-        {/* Header / Back Button */}
         <div className="flex items-center mb-16">
           <Link href="/forgot-password/otp" className="text-gray-800 hover:text-gray-600 transition-colors">
             <ArrowRight size={24} />
           </Link>
         </div>
 
-        {/* Headings */}
         <div className="text-center mb-10">
           <h1 className="text-2xl font-bold text-[#1FA6BA] mb-3">إعادة تعيين كلمة المرور</h1>
           <p className="text-gray-400 text-sm leading-relaxed px-2 font-medium">
@@ -56,7 +83,6 @@ export default function NewPasswordPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           
-          {/* New Password */}
           <div className="space-y-2 text-right">
             <label className="text-sm font-bold text-[#004e70] block">
               كلمة المرور الجديدة
@@ -81,7 +107,6 @@ export default function NewPasswordPage() {
             </div>
           </div>
 
-          {/* Confirm New Password */}
           <div className="space-y-2 text-right">
             <label className="text-sm font-bold text-[#004e70] block">
               تأكيد كلمة المرور الجديدة
@@ -106,7 +131,6 @@ export default function NewPasswordPage() {
             </div>
           </div>
 
-          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading || !password || !confirmPassword}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Share2, Play, Lock, FileText, X, MessageCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import AuthenticatedHeader from '@/components/layout/AuthenticatedHeader';
@@ -19,6 +19,103 @@ export default function CourseDetailsPage() {
   // State for locked modal, ask modal, subscription status, and Q&A history mode
   const [isLockedModalOpen, setIsLockedModalOpen] = useState(false);
   const [isAskModalOpen, setIsAskModalOpen] = useState(false);
+  
+  // QA state
+  const [questionText, setQuestionText] = useState('');
+  const [currentVideoTime, setCurrentVideoTime] = useState<number>(0);
+  const [isRecording, setIsRecording] = useState(false);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const [watchedSeconds, setWatchedSeconds] = useState<Set<number>>(new Set());
+  const [isSubmittingQuestion, setIsSubmittingQuestion] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === 'videoTimeUpdate') {
+        const time = Math.floor(event.data.time);
+        setCurrentVideoTime(time);
+        
+        // Track real watch time (prevent skipping)
+        setWatchedSeconds(prev => {
+          const next = new Set(prev);
+          next.add(time);
+          return next;
+        });
+      }
+    };
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
+
+  const formatVideoTime = (seconds: number) => {
+    if (!seconds) return "0:00";
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+  };
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          audioChunksRef.current.push(event.data);
+        }
+      };
+
+      mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        setAudioBlob(audioBlob);
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error("Error accessing microphone:", error);
+      alert("يرجى السماح بالوصول إلى الميكروفون");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const submitQuestion = async () => {
+    if (!questionText.trim() && !audioBlob) {
+       alert("يرجى كتابة سؤال أو تسجيل صوت");
+       return;
+    }
+    
+    setIsSubmittingQuestion(true);
+    try {
+      const formData = new FormData();
+      if (questionText.trim()) formData.append('text', questionText);
+      if (audioBlob) formData.append('audio', audioBlob, 'voice.webm');
+      formData.append('timestamp', formatVideoTime(currentVideoTime));
+      if (selectedLesson?.id) formData.append('lecture_id', selectedLesson.id.toString());
+      
+      await coursesApi.submitCourseQuestion(courseId as string, formData);
+      alert("تم إرسال السؤال بنجاح!");
+      setIsAskModalOpen(false);
+      setQuestionText('');
+      setAudioBlob(null);
+    } catch (err) {
+      console.error("Failed to submit question:", err);
+      alert("حدث خطأ أثناء إرسال السؤال");
+    } finally {
+      setIsSubmittingQuestion(false);
+    }
+  };
   const [isSubscribed, setIsSubscribed] = useState(true); // Default to true to show the paid state
   const [isQAHistoryMode, setIsQAHistoryMode] = useState(false);
   // Course Data State
@@ -32,6 +129,22 @@ export default function CourseDetailsPage() {
   const [isLoadingVideo, setIsLoadingVideo] = useState(false);
   const [lecturePdfUrl, setLecturePdfUrl] = useState<string | null>(null);
 
+  // Sync real watch progress with the backend periodically (every 10 seconds)
+  useEffect(() => {
+    if (!selectedLesson?.id || watchedSeconds.size === 0) return;
+    
+    const interval = setInterval(() => {
+       // We send the number of unique seconds watched (real watch time without skipping)
+       if (coursesApi.updateProgress) {
+         coursesApi.updateProgress(selectedLesson.id, watchedSeconds.size).catch(e => {
+           console.warn("Failed to sync progress", e?.message || e);
+         });
+       }
+    }, 10000);
+    
+    return () => clearInterval(interval);
+  }, [selectedLesson?.id, watchedSeconds.size]);
+
   // Cleanup object URLs on unmount to prevent memory leaks
   useEffect(() => {
     return () => {
@@ -43,6 +156,49 @@ export default function CourseDetailsPage() {
 
   const [qaHistory, setQaHistory] = useState<any[]>([]);
   const [isLoadingQA, setIsLoadingQA] = useState(false);
+  
+  // Reviews state
+  const [courseReviews, setCourseReviews] = useState<any[]>([]);
+  const [isLoadingReviews, setIsLoadingReviews] = useState(false);
+  const [newReviewRating, setNewReviewRating] = useState(5);
+  const [newReviewComment, setNewReviewComment] = useState('');
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [currentScreenshotIndex, setCurrentScreenshotIndex] = useState(0);
+  
+  const submitReview = async () => {
+    if (!newReviewComment.trim()) return alert('الرجاء كتابة تعليق للاستاذ');
+    try {
+      setIsSubmittingReview(true);
+      await coursesApi.addCourseReview(courseId as string, newReviewRating, newReviewComment);
+      alert('تم إرسال تقييمك بنجاح! شكراً لك.');
+      setNewReviewComment('');
+      setNewReviewRating(5);
+      
+      // refetch reviews
+      const res = await coursesApi.getCourseReviews(courseId as string);
+      setCourseReviews(Array.isArray(res) ? res : (res?.data || []));
+    } catch (err: any) {
+      console.error(err);
+      alert(err.message || 'حدث خطأ أثناء إرسال التقييم');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'reviews' && courseId) {
+      setIsLoadingReviews(true);
+      coursesApi.getCourseReviews(courseId as string)
+        .then((res: any) => {
+           setCourseReviews(Array.isArray(res) ? res : (res?.data || []));
+        })
+        .catch(err => {
+           console.error("Failed to fetch reviews", err);
+           setCourseReviews([]);
+        })
+        .finally(() => setIsLoadingReviews(false));
+    }
+  }, [activeTab, courseId]);
 
   // Fetched Lectures State
   const [fetchedLectures, setFetchedLectures] = useState<any[]>([]);
@@ -58,12 +214,13 @@ export default function CourseDetailsPage() {
         try {
           if (courseData.subscribed_group) {
             // User is subscribed — api.ts interceptor already unwraps envelope, res IS the array
-            const res = await coursesApi.getLecturesGroup(type, courseData.id, courseData.subscribed_group);
+            const groupId = typeof courseData.subscribed_group === 'object' ? courseData.subscribed_group.id : courseData.subscribed_group;
+            const res = await coursesApi.getLecturesGroup(type, courseData.id, groupId);
             const lectures = Array.isArray(res) ? res : [];
             setFetchedLectures(lectures);
             
             if (lectures.length > 0 && !selectedLesson) {
-               setSelectedLesson({ ...lectures[0], groupId: lectures[0].lectures_group_id || courseData.subscribed_group });
+               setSelectedLesson({ ...lectures[0], groupId: lectures[0].lectures_group_id || groupId });
             }
           } else {
             // Not subscribed — fetch all groups for curriculum preview
@@ -153,7 +310,7 @@ export default function CourseDetailsPage() {
         setIsLoadingCourse(false);
       })
       .catch(err => {
-        console.error("Failed to load course details:", err?.message || err);
+        console.warn("Failed to load course details:", err?.message || err);
         // 401 = not logged in, show a clear message instead of generic error
         if (err?.status === 401 || err?.code === 'UNAUTHENTICATED') {
           setCourseError('يجب تسجيل الدخول أولاً لعرض تفاصيل الدورة');
@@ -168,6 +325,7 @@ export default function CourseDetailsPage() {
   useEffect(() => {
     if (selectedLesson?.id) {
       setIsLoadingVideo(true);
+      setWatchedSeconds(new Set()); // Reset watch time for new lesson
       
       const fetchVideo = async () => {
         try {
@@ -184,9 +342,12 @@ export default function CourseDetailsPage() {
              // For topics, try fetching the PDF
              try {
                const pdfRes = await coursesApi.getLecturePdf(selectedLesson.id);
-               if (pdfRes?.data instanceof Blob) {
-                 const objectUrl = URL.createObjectURL(pdfRes.data);
+               const blob = pdfRes instanceof Blob ? pdfRes : pdfRes?.data;
+               if (blob instanceof Blob && blob.type !== 'application/json') {
+                 const objectUrl = URL.createObjectURL(blob);
                  setLecturePdfUrl(objectUrl);
+               } else {
+                 throw new Error("PDF not found or invalid format");
                }
              } catch (e: any) {
                // Only log if it's an unexpected error, a 404 just means no PDF exists for this lesson
@@ -728,8 +889,26 @@ export default function CourseDetailsPage() {
         )}
 
         {activeTab === 'about' && (
-          <div className="p-8 text-center text-gray-700 animate-in fade-in slide-in-from-bottom-2 duration-300 bg-white rounded-2xl border border-gray-100 shadow-sm whitespace-pre-line text-lg leading-relaxed">
-            {courseData?.description || courseData?.about_course || courseData?.about || 'لا توجد معلومات متوفرة عن هذه الدورة حاليا.'}
+          <div className="p-8 text-right text-gray-700 animate-in fade-in slide-in-from-bottom-2 duration-300 bg-white rounded-2xl border border-gray-100 shadow-sm whitespace-pre-line text-lg leading-relaxed" dir="rtl">
+            {(() => {
+              if (courseData?.details) {
+                try {
+                  const detailsArray = JSON.parse(courseData.details);
+                  if (Array.isArray(detailsArray) && detailsArray.length > 0) {
+                    return (
+                      <ul className="list-disc list-inside space-y-4">
+                        {detailsArray.map((item: string, idx: number) => (
+                          <li key={idx} className="text-gray-800">{item}</li>
+                        ))}
+                      </ul>
+                    );
+                  }
+                } catch (e) {
+                  return courseData.details;
+                }
+              }
+              return courseData?.description || courseData?.about_course || courseData?.about || 'لا توجد معلومات متوفرة عن هذه الدورة حاليا.';
+            })()}
           </div>
         )}
 
@@ -760,9 +939,16 @@ export default function CourseDetailsPage() {
                     <span className="font-bold text-gray-800 mb-2">قيم الاستاذ</span>
                     <div className="flex items-center gap-1 flex-row-reverse">
                       {[1, 2, 3, 4, 5].map((star) => (
-                        <svg key={star} className={`w-6 h-6 ${star <= 4 ? 'text-[#f5d547]' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
+                        <button 
+                          key={star} 
+                          onClick={() => setNewReviewRating(star)}
+                          disabled={isSubmittingReview}
+                          className="focus:outline-none transition-transform hover:scale-110"
+                        >
+                          <svg className={`w-6 h-6 transition-colors ${star <= newReviewRating ? 'text-[#f5d547]' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        </button>
                       ))}
                     </div>
                   </div>
@@ -770,14 +956,22 @@ export default function CourseDetailsPage() {
                   <div className="flex flex-col mb-4">
                     <label className="text-sm text-gray-600 font-bold mb-2">اترك تعليقا للاستاذ</label>
                     <textarea 
+                      value={newReviewComment}
+                      onChange={(e) => setNewReviewComment(e.target.value)}
+                      disabled={isSubmittingReview}
                       placeholder="اترك تعليقا للاستاذ..." 
-                      className="w-full bg-white border border-gray-200 rounded-xl p-4 min-h-[100px] resize-none focus:outline-none focus:border-[#38b6c7] focus:ring-1 focus:ring-[#38b6c7] transition-all"
+                      className="w-full bg-white border border-gray-200 rounded-xl p-4 min-h-[100px] resize-none focus:outline-none focus:border-[#38b6c7] focus:ring-1 focus:ring-[#38b6c7] transition-all disabled:opacity-50"
                       dir="rtl"
                     ></textarea>
                   </div>
 
                   <div className="flex justify-start">
-                    <button className="bg-[#0d4a68] text-white px-8 py-2.5 rounded-xl font-bold transition-colors hover:bg-[#0a3a52] shadow-sm">
+                    <button 
+                      onClick={submitReview}
+                      disabled={isSubmittingReview}
+                      className="bg-[#0d4a68] text-white px-8 py-2.5 rounded-xl font-bold transition-colors hover:bg-[#0a3a52] shadow-sm disabled:opacity-50 flex items-center gap-2"
+                    >
+                      {isSubmittingReview && <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>}
                       حفظ التعليق
                     </button>
                   </div>
@@ -785,25 +979,40 @@ export default function CourseDetailsPage() {
 
                 {/* List of Reviews */}
                 <div className="divide-y divide-gray-100 bg-white border border-gray-100 rounded-2xl shadow-sm px-6">
-                  {mockReviews.map((review) => (
+                  {isLoadingReviews ? (
+                    <div className="py-8 flex justify-center">
+                      <div className="w-8 h-8 border-4 border-[#38b6c7] border-t-transparent rounded-full animate-spin"></div>
+                    </div>
+                  ) : courseReviews.length === 0 ? (
+                    <div className="py-8 text-center text-gray-500 font-medium text-sm">
+                       لا توجد تقييمات حاليا لهذه الدورة.
+                    </div>
+                  ) : courseReviews.map((review: any) => {
+                    const name = review.student?.name || review.user?.name || review.name || 'مستخدم مجهول';
+                    const rating = review.rate || review.rating || 5;
+                    const comment = review.comment || review.body || '';
+                    const date = review.created_at ? new Date(review.created_at).toLocaleDateString('ar-DZ') : (review.date || '');
+                    const avatar = review.student?.image ? `https://mrstudy.net/${review.student.image}` : `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=f5d547&color=fff`;
+                    
+                    return (
                     <div key={review.id} className="py-6 flex justify-between items-start">
                       <div className="flex gap-4">
-                        <img src={review.avatar} alt={review.name} className="w-12 h-12 rounded-full border border-gray-200" />
+                        <img src={avatar} alt={name} className="w-12 h-12 rounded-full border border-gray-200 object-cover" />
                         <div className="flex flex-col text-right">
                           <div className="flex items-center gap-1 flex-row-reverse justify-end mb-1">
                             {[1, 2, 3, 4, 5].map((star) => (
-                              <svg key={star} className={`w-3 h-3 ${star <= review.rating ? 'text-[#f5d547]' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
+                              <svg key={star} className={`w-3 h-3 ${star <= rating ? 'text-[#f5d547]' : 'text-gray-200'}`} fill="currentColor" viewBox="0 0 20 20">
                                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                               </svg>
                             ))}
                           </div>
-                          <span className="font-bold text-gray-800 text-sm mb-1">{review.comment}</span>
-                          <span className="text-xs text-gray-400 font-medium">{review.name}</span>
+                          <span className="font-bold text-gray-800 text-sm mb-1">{comment}</span>
+                          <span className="text-xs text-gray-400 font-medium">{name}</span>
                         </div>
                       </div>
-                      <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{review.date}</span>
+                      <span className="text-xs text-gray-400 font-medium whitespace-nowrap">{date}</span>
                     </div>
-                  ))}
+                  )})}
                 </div>
               </>
             ) : (
@@ -812,31 +1021,59 @@ export default function CourseDetailsPage() {
                   "اكتشف آراء الطلاب وكيف ساعدتهم هذه الدورة على التفوق و تحصيل معدل عال 😍🔥"
                 </h3>
                 
-                <div className="relative w-full max-w-sm flex items-center justify-center">
+                {(() => {
+                  const screenshotReviews = courseReviews.filter(r => r.image || r.photo || r.image_url);
                   
-                  {/* Left Arrow (Cyan) */}
-                  <button className="absolute -left-4 md:-left-12 z-10 w-12 h-12 rounded-full bg-[#38b6c7] text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform">
-                    <ArrowRight className="w-6 h-6 rotate-180" />
-                  </button>
+                  if (screenshotReviews.length === 0) {
+                     return (
+                       <div className="w-full max-w-sm h-[300px] bg-white rounded-3xl shadow-sm border border-gray-100 flex items-center justify-center text-gray-400 font-bold">
+                         لا توجد صور متوفرة حالياً.
+                       </div>
+                     );
+                  }
+                  
+                  const currentImageField = screenshotReviews[currentScreenshotIndex]?.image || screenshotReviews[currentScreenshotIndex]?.photo || screenshotReviews[currentScreenshotIndex]?.image_url;
+                  const currentScreenshotUrl = currentImageField?.startsWith('http') 
+                    ? currentImageField 
+                    : `https://mrstudy.net/${currentImageField?.startsWith('storage') ? currentImageField : 'storage/' + currentImageField}`;
+                  
+                  const nextSlide = () => setCurrentScreenshotIndex((prev) => (prev + 1) % screenshotReviews.length);
+                  const prevSlide = () => setCurrentScreenshotIndex((prev) => (prev === 0 ? screenshotReviews.length - 1 : prev - 1));
 
-                  {/* Screenshot Image Placeholder */}
-                  <div className="w-[280px] h-[550px] bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-gray-800 relative">
-                    <img 
-                      src="https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" 
-                      alt="Student Review Screenshot" 
-                      className="w-full h-full object-cover opacity-60" 
-                    />
-                    <div className="absolute inset-0 flex items-center justify-center text-white font-bold p-4 text-center text-sm">
-                      [صورة المحادثة / سكرين شوت]
+                  return (
+                    <div className="relative w-full max-w-sm flex items-center justify-center">
+                      {/* Left Arrow (Cyan) */}
+                      {screenshotReviews.length > 1 && (
+                        <button 
+                          onClick={prevSlide}
+                          className="absolute -left-4 md:-left-12 z-10 w-12 h-12 rounded-full bg-[#38b6c7] text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+                        >
+                          <ArrowRight className="w-6 h-6 rotate-180" />
+                        </button>
+                      )}
+
+                      {/* Screenshot Image Container */}
+                      <div className="w-[280px] h-[550px] bg-black rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-gray-800 relative">
+                        <img 
+                          src={currentScreenshotUrl}
+                          alt="Student Review Screenshot" 
+                          className="w-full h-full object-cover transition-opacity duration-300"
+                          onError={(e) => { e.currentTarget.src = "https://images.unsplash.com/photo-1611162617474-5b21e879e113?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80"; }}
+                        />
+                      </div>
+
+                      {/* Right Arrow (Dark Blue) */}
+                      {screenshotReviews.length > 1 && (
+                        <button 
+                          onClick={nextSlide}
+                          className="absolute -right-4 md:-right-12 z-10 w-12 h-12 rounded-full bg-[#0d4a68] text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform"
+                        >
+                          <ArrowRight className="w-6 h-6" />
+                        </button>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Right Arrow (Dark Blue) */}
-                  <button className="absolute -right-4 md:-right-12 z-10 w-12 h-12 rounded-full bg-[#0d4a68] text-white flex items-center justify-center shadow-md hover:scale-105 transition-transform">
-                    <ArrowRight className="w-6 h-6" />
-                  </button>
-                  
-                </div>
+                  );
+                })()}
               </div>
             )}
           </div>
@@ -914,7 +1151,8 @@ export default function CourseDetailsPage() {
             {/* Close Button */}
             <button 
               onClick={() => setIsAskModalOpen(false)}
-              className="absolute top-4 left-4 w-8 h-8 bg-gray-400 hover:bg-gray-500 text-white rounded-full flex items-center justify-center transition-colors"
+              className="absolute top-4 left-4 w-8 h-8 bg-gray-400 hover:bg-gray-500 text-white rounded-full flex items-center justify-center transition-colors disabled:opacity-50"
+              disabled={isSubmittingQuestion}
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M6 18L18 6M6 6l12 12" /></svg>
             </button>
@@ -929,35 +1167,66 @@ export default function CourseDetailsPage() {
 
             {/* Timestamp */}
             <div className="flex items-center gap-2 mb-4 text-[#1FA6BA] font-bold">
-              <span dir="ltr">12:52</span>
+              <span dir="ltr">{formatVideoTime(currentVideoTime)}</span>
               <span>الوقت المرتبط بالسؤال</span>
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
             </div>
 
+            {audioBlob && (
+                <div className="w-full bg-[#f0f4fb] rounded-full px-4 py-2 mb-4 flex items-center justify-between text-sm text-[#0d4a68]">
+                    <span>تم تسجيل الصوت بنجاح</span>
+                    <button onClick={() => setAudioBlob(null)} className="text-red-500 hover:text-red-700">
+                        حذف
+                    </button>
+                </div>
+            )}
+
             {/* Input Field */}
-            <div className="w-full bg-white border border-gray-300 rounded-full px-4 py-2.5 mb-6 flex items-center gap-3 shadow-sm">
-              <button className="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            <div className="w-full bg-white border border-gray-300 rounded-full px-4 py-2.5 mb-6 flex items-center gap-3 shadow-sm focus-within:border-[#1FA6BA] focus-within:ring-1 focus-within:ring-[#1FA6BA] transition-all">
+              <button 
+                 onClick={submitQuestion}
+                 disabled={isSubmittingQuestion || (!questionText.trim() && !audioBlob)}
+                 className="w-8 h-8 bg-gray-400 text-white rounded-full flex items-center justify-center hover:bg-gray-500 transition-colors shrink-0 disabled:opacity-50 disabled:cursor-not-allowed">
+                {isSubmittingQuestion ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                )}
               </button>
               
               <input 
                 type="text" 
                 placeholder="اكتب سؤالك..." 
                 className="flex-1 bg-transparent border-none outline-none text-right placeholder:text-gray-400 font-medium"
+                value={questionText}
+                onChange={(e) => setQuestionText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitQuestion()}
+                disabled={isSubmittingQuestion}
               />
               
               <div className="flex items-center gap-2 text-gray-400 shrink-0">
-                <button className="hover:text-gray-600 transition-colors"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" /></svg></button>
-                <div className="w-px h-5 bg-gray-200"></div>
-                <button className="hover:text-gray-600 transition-colors"><svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" /></svg></button>
+                <button 
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={isSubmittingQuestion}
+                  className={`transition-colors ${isRecording ? 'text-red-500 animate-pulse' : 'hover:text-gray-600'}`}
+                  title={isRecording ? "إيقاف التسجيل" : "تسجيل صوت"}
+                >
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                  </svg>
+                </button>
               </div>
             </div>
 
             {/* Submit Button */}
-            <button className="w-full bg-[#38b6c7] text-white font-black py-4 rounded-xl hover:bg-[#2b96a5] transition-colors shadow-md active:scale-[0.98]">
-              اطرح السؤال
+            <button 
+              onClick={submitQuestion}
+              disabled={isSubmittingQuestion || (!questionText.trim() && !audioBlob)}
+              className="w-full bg-[#38b6c7] text-white font-black py-4 rounded-xl hover:bg-[#2b96a5] transition-colors shadow-md active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            >
+              {isSubmittingQuestion ? 'جاري الإرسال...' : 'اطرح السؤال'}
             </button>
           </div>
         </div>

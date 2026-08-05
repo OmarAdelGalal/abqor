@@ -52,8 +52,9 @@ export default function CoursePdfPage() {
       })
       .then(pdfRes => {
         // Since we configured responseType: 'blob', the payload is a Blob
-        if (pdfRes?.data instanceof Blob) {
-           const objectUrl = URL.createObjectURL(pdfRes.data);
+        const blob = pdfRes instanceof Blob ? pdfRes : pdfRes?.data;
+        if (blob instanceof Blob && blob.type !== 'application/json') {
+           const objectUrl = URL.createObjectURL(blob);
            setPdfData({ pdf_url: objectUrl });
         } else {
            setPdfData(pdfRes?.data?.data || pdfRes?.data || pdfRes);

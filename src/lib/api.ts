@@ -94,6 +94,9 @@ api.interceptors.response.use(
     return apiResponse;
   },
   (error: any) => {
+    // Use console.warn instead of console.error to prevent Next.js from showing the dev error overlay for handled API errors
+    console.warn('[API Axios Error Interceptor]', error?.message, error?.code, error?.config?.url, error?.response?.data);
+    
     // Handle standard HTTP errors (4xx, 5xx) that might still follow the envelope format
     if (error.response) {
       const apiResponse = error.response.data as any;
@@ -106,15 +109,19 @@ api.interceptors.response.use(
         }
       }
 
-      return Promise.reject({
-        status: error.response.status,
-        code: apiResponse?.code || 'HTTP_ERROR',
-        message: apiResponse?.message || error.message || "Unknown Error",
-        data: apiResponse?.data || apiResponse,
-      });
+      const errObj = new Error(apiResponse?.message || error.message || "Unknown Error");
+      (errObj as any).status = error.response.status;
+      (errObj as any).code = apiResponse?.code || 'HTTP_ERROR';
+      (errObj as any).data = apiResponse?.data || apiResponse;
+      (errObj as any).isAxiosError = true;
+      return Promise.reject(errObj);
     }
     
-    return Promise.reject(error);
+    const errObj = new Error(error.message || 'Network Error');
+    (errObj as any).code = error.code || 'UNKNOWN';
+    (errObj as any).url = error.config?.url;
+    (errObj as any).isAxiosError = true;
+    return Promise.reject(errObj);
   }
 );
 

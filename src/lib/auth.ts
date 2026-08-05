@@ -13,6 +13,10 @@ export const authApi = {
     return await api.post('/user/auth/register_by_firebase', data);
   },
 
+  registerByPhone: async (data: any) => {
+    return await api.post('/user/auth/register_by_phone', data);
+  },
+
   checkUser: async (data: { phone?: string; email?: string }) => {
     return await api.post('/user/auth/check_user', data);
   },
@@ -50,8 +54,8 @@ export const authApi = {
     return await api.get('/user/auth/education_years', { params }); // GET, not POST
   },
 
-  fetchEducationMajors: async () => {
-    return await api.get('/user/auth/education_majors');
+  fetchEducationMajors: async (params?: { education_level_id?: number; education_year_id?: number }) => {
+    return await api.get('/user/auth/education_majors', { params });
   },
 
   updateProgram: async (data: any) => {

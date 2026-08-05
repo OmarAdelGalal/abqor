@@ -35,8 +35,24 @@ export const coursesApi = {
     return await api.post(`/user/courses/finish/${id}`);
   },
 
+  updateProgress: async (lessonId: number | string, watchedSeconds: number) => {
+    return await api.post(`/user/courses/progress/${lessonId}`, { watched_seconds: watchedSeconds });
+  },
+
   getCourseQuestions: async (id: number | string) => {
-    return await api.get(`/user/courses/questions/${id}`);
+    return await api.get(`/user/courses/qa/${id}`);
+  },
+
+  submitCourseQuestion: async (id: number | string, formData: FormData) => {
+    return await api.post(`/user/courses/qa/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+
+  addCourseReview: async (id: number | string, rate: number, comment: string) => {
+    return await api.post(`/user/courses/review/${id}`, { rate, comment });
   },
 
   getCourseReviews: async (id: number | string) => {
@@ -101,3 +117,4 @@ export const coursesApi = {
     return await api.post(`/user/quizzes/finish_lesson/${id}`);
   }
 };
+

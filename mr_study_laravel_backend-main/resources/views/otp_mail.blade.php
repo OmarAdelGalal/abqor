@@ -1,0 +1,1 @@
+Your otp code for {{ $type }} is <b>{{ $otp }}</b>

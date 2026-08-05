@@ -1,0 +1,14 @@
+vendor/
+
+docker-compose.yml
+Dockerfile
+nginx.conf
+
+# Never bake secrets/local env into the image (it can also break builds if invalid).
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Local artifacts
+_backups/

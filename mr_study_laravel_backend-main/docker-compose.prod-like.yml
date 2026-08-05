@@ -1,0 +1,136 @@
+services:
+  db:
+    image: mysql:9.0
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: mr_study
+    ports:
+      - "3307:3306"
+    command:
+      - "--max_allowed_packet=512M"
+      - "--net_read_timeout=600"
+      - "--net_write_timeout=600"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-proot"]
+      interval: 5s
+      timeout: 3s
+      retries: 40
+    volumes:
+      - mr_study_mysql_prodlike:/var/lib/mysql
+      - ../../db.sql:/docker-entrypoint-initdb.d/01-db.sql:ro
+
+  redis:
+    image: redis:7-alpine
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      APP_NAME: ABQOR
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: http://localhost:8080
+      APP_KEY: base64:X4xfKmlAligF3AYGymo0hyqMs69s6UMnN794UQxoo+U=
+
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: mr_study
+      DB_USERNAME: root
+      DB_PASSWORD: root
+
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_CLIENT: predis
+      CACHE_DRIVER: redis
+      QUEUE_CONNECTION: redis
+      SESSION_DRIVER: file
+      MAIL_MAILER: log
+
+      # Live protection (recommended)
+      LIVE_PROTECTION_ENABLED: "true"
+      LIVE_PROTECTION_ENFORCE_ENTITLEMENT: "true"
+      LIVE_PROTECTION_SIGNATURE_TTL_SECONDS: "90"
+      LIVE_PROTECTION_ENFORCE_TIME_WINDOW: "true"
+      LIVE_PROTECTION_ISSUE_WINDOW_BEFORE_MINUTES: "15"
+      LIVE_PROTECTION_ISSUE_WINDOW_AFTER_MINUTES: "360"
+      LIVE_PROTECTION_ENABLE_RATE_LIMIT: "true"
+      LIVE_PROTECTION_RATE_LIMIT_MAX_ATTEMPTS: "10"
+      LIVE_PROTECTION_RATE_LIMIT_DECAY_SECONDS: "300"
+      LIVE_PROTECTION_REQUIRE_DEVICE_ID: "true"
+      LIVE_PROTECTION_ENFORCE_DEVICE_CONSISTENCY: "true"
+      LIVE_PROTECTION_DEVICE_BINDING_SCOPE: "user"
+
+      # Student device policy (1 mobile + 1 desktop)
+      DEVICE_POLICY_ENABLED: "true"
+      DEVICE_POLICY_REQUIRE_HEADERS: "true"
+      DEVICE_POLICY_MAX_MOBILE_DEVICES: "1"
+      DEVICE_POLICY_MAX_DESKTOP_DEVICES: "1"
+
+      # Zoom Meeting SDK (replace for real join)
+      ZOOM_MEETING_SDK_KEY: "test-key"
+      ZOOM_MEETING_SDK_SECRET: "test-secret"
+    command: sh -lc "php-fpm"
+    volumes:
+      - mr_study_storage_prodlike:/var/www/html/storage
+
+  queue:
+    profiles: ["background"]
+    build: .
+    depends_on:
+      - app
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_KEY: base64:X4xfKmlAligF3AYGymo0hyqMs69s6UMnN794UQxoo+U=
+      DB_CONNECTION: mysql
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_DATABASE: mr_study
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_CLIENT: predis
+      QUEUE_CONNECTION: redis
+      CACHE_DRIVER: redis
+    command: sh -lc "php artisan queue:work --tries=3 --sleep=1"
+    volumes:
+      - mr_study_storage_prodlike:/var/www/html/storage
+
+  std_zoom:
+    build: ../../ABQOR_Zoom/ABQOR_Zoom-main
+    volumes:
+      - mr_study_std_zoom_prodlike:/app/serve/
+
+  dashboard:
+    build:
+      context: ../../ABQOR_Dashboard/ABQOR_Dashboard-main
+      args:
+        VITE_API_URL: /api/admin
+        VITE_STORAGE_URL: /storage
+    volumes:
+      - mr_study_dashboard_prodlike:/app/serve/
+
+  nginx:
+    image: nginx:alpine
+    depends_on:
+      - app
+      - std_zoom
+      - dashboard
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx.local.conf:/etc/nginx/nginx.conf:ro
+      - ./public:/var/www/html/public:ro
+      - mr_study_storage_prodlike:/var/www/html/storage
+      - mr_study_std_zoom_prodlike:/home/std_zoom
+      - mr_study_dashboard_prodlike:/home/admin_portal
+
+volumes:
+  mr_study_mysql_prodlike:
+  mr_study_storage_prodlike:
+  mr_study_std_zoom_prodlike:
+  mr_study_dashboard_prodlike:

@@ -227,7 +227,10 @@ export default function ProfilePage() {
 
               <div className="flex justify-between items-start z-10 h-full">
                 <div className="flex justify-between items-end w-full h-full mt-auto">
-                   <button className="bg-white text-[#1a5b6e] px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm">
+                   <button 
+                      onClick={() => router.push('/profile/ranking')}
+                      className="bg-white text-[#1a5b6e] px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm"
+                   >
                       <BarChart2 className="w-5 h-5 text-yellow-500" />
                       <span>عرض الترتيب كامل</span>
                    </button>

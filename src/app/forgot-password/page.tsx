@@ -41,18 +41,22 @@ export default function ForgotPasswordPage() {
   return (
     <div className="min-h-screen bg-white p-4 relative" dir="rtl">
       
+      {/* Dimmed Background Overlay when Modal is Active */}
       {isSent && (
         <div className="absolute inset-0 bg-black/40 z-40" />
       )}
 
+      {/* Main Content */}
       <div className={`max-w-[400px] mx-auto w-full pt-4 ${isSent ? 'blur-sm pointer-events-none' : ''}`}>
         
+        {/* Header / Back Button */}
         <div className="flex items-center mb-16">
           <Link href="/login" className="text-gray-800 hover:text-gray-600 transition-colors">
             <ArrowRight size={24} />
           </Link>
         </div>
 
+        {/* Headings */}
         <div className="text-center mb-10">
           <h1 className="text-2xl font-bold text-[#1FA6BA] mb-3">البريد الإلكتروني</h1>
           <p className="text-gray-400 text-sm leading-relaxed px-2 font-medium">
@@ -62,6 +66,7 @@ export default function ForgotPasswordPage() {
 
         <form onSubmit={handleResetPassword} className="space-y-6">
           
+          {/* Email */}
           <div className="space-y-2 text-right">
             <label className="text-sm font-bold text-[#004e70] block">
               البريد الإلكتروني
@@ -82,6 +87,7 @@ export default function ForgotPasswordPage() {
             </div>
           </div>
 
+          {/* Submit Button */}
           <button
             type="submit"
             disabled={isLoading}
@@ -96,10 +102,12 @@ export default function ForgotPasswordPage() {
         </form>
       </div>
 
+      {/* Success Modal */}
       {isSent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
           <div className="bg-white rounded-3xl p-6 max-w-[340px] w-full flex flex-col items-center shadow-xl text-center">
             
+            {/* Illustration */}
             <div className="mb-4">
               <img 
                 src="/c518e28edf6bef8d0d46fdbfb27871175eb44f11.png" 
@@ -111,11 +119,13 @@ export default function ForgotPasswordPage() {
               />
             </div>
 
+            {/* Modal Headings */}
             <h2 className="text-lg font-bold text-gray-800 mb-2">تم إرسال رابط إعادة التعيين</h2>
             <p className="text-gray-400 text-sm leading-relaxed mb-6 font-medium px-2">
               تم إرسال رابط إعادة تعيين كلمة المرور إلى بريدك الإلكتروني. يرجى التحقق من بريدك واتبع الرابط لاستعادة الوصول إلى حسابك.
             </p>
 
+            {/* Modal Button */}
             <button
               onClick={handleModalClose}
               className="w-full bg-[#004e70] hover:bg-[#003d58] text-white font-bold py-3 px-4 rounded-xl transition-colors"

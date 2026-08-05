@@ -84,7 +84,7 @@ export const coursesApi = {
 
   getVideoHandshake: async () => {
     if (!handshakePromise) {
-      handshakePromise = api.post('/video/handshake').catch(err => {
+      handshakePromise = api.post('/video/handshake').catch((err: any) => {
         handshakePromise = null; // reset if it failed so we can retry later
         throw err;
       });

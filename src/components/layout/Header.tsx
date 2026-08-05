@@ -9,7 +9,7 @@ export default function Header() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const pathname = usePathname();
   
-  const authRoutes = ['/dashboard', '/learning', '/account', '/notifications'];
+  const authRoutes = ['/dashboard', '/learning', '/account', '/notifications', '/profile'];
   const isAuthRoute = authRoutes.some(route => pathname?.startsWith(route));
 
   useEffect(() => {
@@ -22,15 +22,21 @@ export default function Header() {
 
   return (
     <>
-      <header className="w-full bg-white border-b border-gray-100 sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-20 flex items-center justify-between flex-row-reverse">
-          <div className="flex items-center gap-2 text-2xl font-black text-[#1FA6BA] tracking-wider uppercase">
+      <header className="w-full bg-white sticky top-0 z-50" style={{ padding: '16px 80px' }}>
+        <div className="mx-auto flex items-center justify-between flex-row-reverse max-w-[1440px]">
+          <div className="text-2xl md:text-3xl font-black text-[#3DAFC1] tracking-wider uppercase font-sans select-none">
             ABQOR
           </div>
           <div>
             <Link 
               href="/onboarding"
-              className="px-8 py-2.5 rounded-full font-bold text-white bg-[#1FA6BA] shadow-md hover:bg-[#188a9c] transition-all cursor-pointer inline-block"
+              className="flex items-center justify-center font-medium text-white bg-[#3DAFC1] hover:bg-[#35a0b1] transition-all cursor-pointer text-lg"
+              style={{
+                width: '160px',
+                height: '48px',
+                borderRadius: '16px',
+                boxShadow: '0px 4px 0px rgba(0,0,0,0.25), 0px 4px 0px #3DAFC1',
+              }}
             >
               تسجيل الدخول
             </Link>

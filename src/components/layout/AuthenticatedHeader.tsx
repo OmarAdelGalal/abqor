@@ -16,7 +16,7 @@ export default function AuthenticatedHeader({ health = 0, diamonds = 0, flame = 
   const navItems = [
     { name: 'الرئيسية', path: '/dashboard', icon: '/home/home.png' },
     { name: 'التعلم', path: '/learning', icon: '/home/lean icon page.png' },
-    { name: 'حسابي', path: '/account', icon: '/home/account icon page.png' },
+    { name: 'حسابي', path: '/profile', icon: '/home/account icon page.png' },
   ];
 
   return (

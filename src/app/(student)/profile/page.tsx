@@ -51,7 +51,7 @@ export default function ProfilePage() {
         <div className="flex flex-col lg:flex-row gap-8">
           
           {/* RIGHT COLUMN - MENU (Visual right, logical order 2 in DOM for mobile first) */}
-          <div className="w-full lg:w-1/3 flex flex-col order-2 lg:order-2">
+          <div className="w-full lg:w-1/3 flex flex-col order-2 lg:order-1">
             <div className="mb-2 px-2 text-right">
               <h3 className="text-gray-400 font-medium text-sm">حسابي</h3>
             </div>
@@ -108,7 +108,7 @@ export default function ProfilePage() {
           </div>
 
           {/* LEFT COLUMN - MAIN PROFILE (Visual left, logical order 1) */}
-          <div className="w-full lg:w-2/3 bg-[#eef8f9] rounded-[2.5rem] p-6 lg:p-10 flex flex-col gap-6 order-1 lg:order-1">
+          <div className="w-full lg:w-2/3 bg-[#eef8f9] rounded-[2.5rem] p-6 lg:p-10 flex flex-col gap-6 order-1 lg:order-2">
             
             {/* User Info Header */}
             <div className="flex flex-col items-center mt-2">

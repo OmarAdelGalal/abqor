@@ -64,5 +64,29 @@ export const authApi = {
 
   getUserProfile: async () => {
     return await api.get('/user/account/');
+  },
+
+  updateProfile: async (data: any) => {
+    return await api.put('/user/account/update_profile', data);
+  },
+
+  changeAvatar: async (formData: FormData) => {
+    return await api.post('/user/account/change_avatar', formData);
+  },
+
+  changeEmail: async (email: string) => {
+    return await api.post('/user/account/change_email', { email });
+  },
+
+  verifyEmailChange: async (email: string, code: string) => {
+    return await api.post('/user/account/verify_email_change', { email, code });
+  },
+
+  changePassword: async (data: any) => {
+    return await api.post('/user/account/change_password', data);
+  },
+
+  deleteAccount: async () => {
+    return await api.post('/user/account/delete_account');
   }
 };

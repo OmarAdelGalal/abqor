@@ -40,6 +40,11 @@ api.interceptors.request.use(
       const deviceClass = window.innerWidth <= 768 ? 'mobile' : 'desktop';
       config.headers.set('X-Device-Class', deviceClass);
     }
+    
+    if (config.data instanceof FormData) {
+      config.headers.delete('Content-Type');
+    }
+
     return config;
   },
   (error: any) => {

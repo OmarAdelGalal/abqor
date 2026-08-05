@@ -60,7 +60,7 @@ export default function ServicesRow() {
       icon: <img src="/home/E-Store.png" alt="E-Store" className="w-8 h-8 object-contain" />,
       bgColor: 'bg-[#fff0f2]',
       iconBg: 'bg-transparent',
-      route: '#'
+      route: '/store'
     },
     {
       title: 'الدورات التعليمية',

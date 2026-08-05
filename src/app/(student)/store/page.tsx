@@ -48,7 +48,7 @@ export default function StorePage() {
           <div className="flex flex-col items-center justify-center py-10 bg-white rounded-[2rem] min-h-[600px]">
             {/* The coming soon illustration */}
             <img 
-              src="/store-coming-soon.png" 
+              src="/home/Vector.png" 
               alt="Coming Soon" 
               className="max-w-[400px] w-full object-contain mb-8" 
               onError={(e) => {

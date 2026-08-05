@@ -92,5 +92,9 @@ export const authApi = {
 
   getAccountView: async () => {
     return await api.get('/user/account/account_view');
+  },
+  getRanking: async () => {
+    return await api.get('/user/account/ranking');
   }
 };
+// Trigger HMR

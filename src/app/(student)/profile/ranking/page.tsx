@@ -20,21 +20,41 @@ import {
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 
-// Mock data (since backend API isn't ready)
-const FAKE_RANKINGS = [
-  { rank: 1, name: 'علي العالي', progress: 12, diamonds: 500, avatar: '/070f32d8344482d233c60ed52e8fab2be5848260.png' },
-  { rank: 2, name: 'نور محمد', progress: 12, diamonds: 500, avatar: '/8aef59e22b486ce79cac17963eb0fe241c3dc4f1.png' },
-  { rank: 3, name: 'سارة أحمد', progress: 12, diamonds: 500, avatar: '/9bb9cc83266f8df2d0b844971b105eb1084227ff.png' },
-  { rank: 4, name: 'شيماء أبو القميز', progress: 12, diamonds: 500, avatar: '/c518e28edf6bef8d0d46fdbfb27871175eb44f11.png' },
-  { rank: 5, name: 'شيماء أبو القميز', progress: 12, diamonds: 500, avatar: '/boy2.png' },
-  { rank: 6, name: 'شيماء أبو القميز', progress: 12, diamonds: 500, avatar: '/image 24.png' },
-  { rank: 7, name: 'شيماء أبو القميز', progress: 12, diamonds: 500, avatar: '/boy2.png' },
-];
+import { authApi } from '@/lib/auth';
+
+interface RankingUser {
+  rank: number;
+  name: string;
+  progress: number;
+  diamonds: number;
+  avatar: string | null;
+}
 
 export default function RankingPage() {
   const router = useRouter();
   const { logout, user } = useAuthStore();
   
+  const [rankings, setRankings] = React.useState<RankingUser[]>([]);
+  const [currentUserData, setCurrentUserData] = React.useState<RankingUser | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchRankings = async () => {
+      try {
+        const response = await authApi.getRanking();
+        if (response) {
+          setRankings(response.ranking || []);
+          setCurrentUserData(response.current_user || null);
+        }
+      } catch (error) {
+        console.error("Failed to fetch rankings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchRankings();
+  }, []);
+
   const handleLogout = () => {
     logout();
     router.push('/login');
@@ -126,6 +146,11 @@ export default function RankingPage() {
             <h1 className="text-2xl font-black text-gray-800 mb-8 text-center">ترتيب التلاميذ</h1>
 
             {/* Podium Section */}
+            {isLoading ? (
+               <div className="flex justify-center items-center h-[300px]">
+                 <span className="text-gray-400 font-bold">جاري تحميل الترتيب...</span>
+               </div>
+            ) : rankings.length >= 3 ? (
             <div className="bg-[#f2fbfb] rounded-[2rem] p-6 pt-16 mb-6 flex items-end justify-center h-[300px] gap-0 lg:gap-2 relative overflow-hidden shadow-sm">
                
                {/* 2nd place */}
@@ -133,14 +158,14 @@ export default function RankingPage() {
                  <div className="relative mb-3 flex flex-col items-center justify-center">
                     {/* Fake silver wing decoration */}
                     <div className="absolute -inset-2 bg-gray-300 rounded-full blur-sm opacity-50"></div>
-                    <img src={FAKE_RANKINGS[1].avatar} className="w-14 h-14 rounded-full border-4 border-gray-400 object-cover relative z-10" alt="" />
+                    <img src={rankings[1]?.avatar || '/image 24.png'} className="w-14 h-14 rounded-full border-4 border-gray-400 object-cover relative z-10" alt="" />
                  </div>
                  <div className="bg-white rounded-t-xl w-full pt-4 pb-2 px-2 flex flex-col items-center justify-end h-28 shadow-md relative border border-gray-100">
                     <div className="absolute -top-3 w-7 h-7 bg-slate-500 text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm ring-4 ring-white">2</div>
-                    <span className="font-bold text-xs text-[#004e70] mb-2">{FAKE_RANKINGS[1].name}</span>
+                    <span className="font-bold text-xs text-[#004e70] mb-2">{rankings[1]?.name || '---'}</span>
                     <div className="flex items-center gap-2 text-[#45B7C7] text-xs font-bold">
-                       <span>{FAKE_RANKINGS[1].progress}%</span>
-                       <span>{FAKE_RANKINGS[1].diamonds} ♦</span>
+                       <span>{rankings[1]?.progress || 0}%</span>
+                       <span>{rankings[1]?.diamonds || 0} ♦</span>
                     </div>
                  </div>
                </div>
@@ -151,14 +176,14 @@ export default function RankingPage() {
                     <Award className="absolute -top-8 text-yellow-500 fill-yellow-500 w-12 h-12 drop-shadow-md z-20" />
                     {/* Fake gold wing decoration */}
                     <div className="absolute -inset-3 bg-yellow-400 rounded-full blur-md opacity-40"></div>
-                    <img src={FAKE_RANKINGS[0].avatar} className="w-16 h-16 rounded-full border-[5px] border-yellow-400 object-cover relative z-10" alt="" />
+                    <img src={rankings[0]?.avatar || '/image 24.png'} className="w-16 h-16 rounded-full border-[5px] border-yellow-400 object-cover relative z-10" alt="" />
                  </div>
                  <div className="bg-white rounded-t-xl w-full pt-6 pb-4 px-2 flex flex-col items-center justify-end h-[140px] shadow-lg relative border border-yellow-100">
                     <div className="absolute -top-4 w-9 h-9 bg-orange-400 text-white rounded-full flex items-center justify-center font-black text-lg shadow-sm ring-4 ring-white">1</div>
-                    <span className="font-black text-sm text-[#004e70] mb-2">{FAKE_RANKINGS[0].name}</span>
+                    <span className="font-black text-sm text-[#004e70] mb-2">{rankings[0]?.name || '---'}</span>
                     <div className="flex items-center gap-2 text-[#45B7C7] text-sm font-bold">
-                       <span>{FAKE_RANKINGS[0].progress}%</span>
-                       <span>{FAKE_RANKINGS[0].diamonds} ♦</span>
+                       <span>{rankings[0]?.progress || 0}%</span>
+                       <span>{rankings[0]?.diamonds || 0} ♦</span>
                     </div>
                  </div>
                </div>
@@ -168,70 +193,79 @@ export default function RankingPage() {
                  <div className="relative mb-3 flex flex-col items-center justify-center">
                     {/* Fake bronze wing decoration */}
                     <div className="absolute -inset-2 bg-amber-700 rounded-full blur-sm opacity-50"></div>
-                    <img src={FAKE_RANKINGS[2].avatar} className="w-14 h-14 rounded-full border-4 border-[#b06a4b] object-cover relative z-10" alt="" />
+                    <img src={rankings[2]?.avatar || '/image 24.png'} className="w-14 h-14 rounded-full border-4 border-[#b06a4b] object-cover relative z-10" alt="" />
                  </div>
                  <div className="bg-white rounded-t-xl w-full pt-4 pb-2 px-2 flex flex-col items-center justify-end h-24 shadow-md relative border border-gray-100">
                     <div className="absolute -top-3 w-7 h-7 bg-[#8c5237] text-white rounded-full flex items-center justify-center font-bold text-sm shadow-sm ring-4 ring-white">3</div>
-                    <span className="font-bold text-xs text-[#004e70] mb-2">{FAKE_RANKINGS[2].name}</span>
+                    <span className="font-bold text-xs text-[#004e70] mb-2">{rankings[2]?.name || '---'}</span>
                     <div className="flex items-center gap-2 text-[#45B7C7] text-xs font-bold">
-                       <span>{FAKE_RANKINGS[2].progress}%</span>
-                       <span>{FAKE_RANKINGS[2].diamonds} ♦</span>
+                       <span>{rankings[2]?.progress || 0}%</span>
+                       <span>{rankings[2]?.diamonds || 0} ♦</span>
                     </div>
                  </div>
                </div>
             </div>
+            ) : !isLoading ? (
+               <div className="flex justify-center items-center h-[300px]">
+                 <span className="text-gray-400 font-bold">لا يوجد ترتيب بعد</span>
+               </div>
+            ) : null}
 
             {/* Current User Highlight */}
-            <div className="border border-[#45B7C7] bg-[#f8fdff] rounded-3xl p-5 flex items-center justify-between mb-6 shadow-sm relative overflow-hidden">
-               <div className="flex items-center gap-3 relative z-10">
-                  <span className="text-gray-800 font-bold mr-2 text-sm">أنت</span>
-                  
-                  {/* Badge */}
-                  <div className="relative w-12 h-12 flex items-center justify-center mr-2">
-                    <div className="absolute inset-0 bg-[#008db9] rounded-xl rotate-45 transform scale-90"></div>
-                    <span className="relative z-10 text-white font-black text-xl">{currentUserRank}</span>
-                  </div>
+            {!isLoading && currentUserData && (
+              <div className="border border-[#45B7C7] bg-[#f8fdff] rounded-3xl p-5 flex items-center justify-between mb-6 shadow-sm relative overflow-hidden">
+                 <div className="flex items-center gap-3 relative z-10">
+                    <span className="text-gray-800 font-bold mr-2 text-sm">أنت</span>
+                    
+                    {/* Badge */}
+                    <div className="relative w-12 h-12 flex items-center justify-center mr-2">
+                      <div className="absolute inset-0 bg-[#008db9] rounded-xl rotate-45 transform scale-90"></div>
+                      <span className="relative z-10 text-white font-black text-xl">{currentUserData.rank}</span>
+                    </div>
 
-                  <div className="flex items-center gap-2">
-                     <img src={user?.avatar ? `https://mrstudy.net/storage/${user.avatar}` : '/image 24.png'} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
-                     <span className="font-bold text-gray-800">{user?.name || 'شيماء أبو القميز'}</span>
-                  </div>
-               </div>
-               
-               <div className="flex items-center gap-6 text-[#008db9] font-bold relative z-10">
-                  <div className="flex items-center gap-2">
-                     <span className="text-xl">500</span>
-                     <span className="text-sm">♦</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                     <span className="text-xl">12%</span>
-                     <span className="text-xs text-gray-500 font-medium">مستوى التقدم</span>
-                  </div>
-               </div>
-            </div>
+                    <div className="flex items-center gap-2">
+                       <img src={currentUserData.avatar || (user?.avatar ? `https://mrstudy.net/storage/${user.avatar}` : '/image 24.png')} alt="" className="w-12 h-12 rounded-full object-cover border-2 border-white shadow-sm" />
+                       <span className="font-bold text-gray-800">{currentUserData.name}</span>
+                    </div>
+                 </div>
+                 
+                 <div className="flex items-center gap-6 text-[#008db9] font-bold relative z-10">
+                    <div className="flex items-center gap-2">
+                       <span className="text-xl">{currentUserData.diamonds}</span>
+                       <span className="text-sm">♦</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                       <span className="text-xl">{currentUserData.progress}%</span>
+                       <span className="text-xs text-gray-500 font-medium">مستوى التقدم</span>
+                    </div>
+                 </div>
+              </div>
+            )}
 
             {/* Other Ranks List */}
-            <div className="flex flex-col gap-2 mb-8">
-               {FAKE_RANKINGS.slice(3).map((student, idx) => (
-                 <div key={student.rank} className="bg-white border border-gray-100 rounded-3xl p-4 flex items-center justify-between hover:border-gray-200 transition-colors shadow-sm">
-                   <div className="flex items-center gap-4">
-                     <span className="font-black text-gray-800 w-8 text-center text-lg">{student.rank}</span>
-                     <img src={student.avatar} alt="" className="w-12 h-12 rounded-full object-cover border border-gray-100" />
-                     <span className="font-bold text-gray-700">{student.name}</span>
-                   </div>
-                   
-                   <div className="flex items-center gap-6 text-[#008db9] font-bold">
-                     <div className="flex items-center gap-1">
-                        <span className="text-lg">{student.diamonds}</span>
-                        <span className="text-xs">♦</span>
+            {!isLoading && rankings.length > 3 && (
+              <div className="flex flex-col gap-2 mb-8">
+                 {rankings.slice(3).map((student) => (
+                   <div key={student.rank} className="bg-white border border-gray-100 rounded-3xl p-4 flex items-center justify-between hover:border-gray-200 transition-colors shadow-sm">
+                     <div className="flex items-center gap-4">
+                       <span className="font-black text-gray-800 w-8 text-center text-lg">{student.rank}</span>
+                       <img src={student.avatar || '/image 24.png'} alt="" className="w-12 h-12 rounded-full object-cover border border-gray-100" />
+                       <span className="font-bold text-gray-700">{student.name}</span>
                      </div>
-                     <div className="flex items-center gap-1">
-                        <span className="text-lg">{student.progress}%</span>
+                     
+                     <div className="flex items-center gap-6 text-[#008db9] font-bold">
+                       <div className="flex items-center gap-1">
+                          <span className="text-lg">{student.diamonds}</span>
+                          <span className="text-xs">♦</span>
+                       </div>
+                       <div className="flex items-center gap-1">
+                          <span className="text-lg">{student.progress}%</span>
+                       </div>
                      </div>
                    </div>
-                 </div>
-               ))}
-            </div>
+                 ))}
+              </div>
+            )}
 
             {/* Motivation Banner */}
             <div className="bg-[#eff2f9] rounded-3xl p-8 flex items-center justify-between relative overflow-hidden shadow-sm">

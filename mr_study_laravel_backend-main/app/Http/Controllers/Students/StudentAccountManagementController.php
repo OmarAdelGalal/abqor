@@ -220,5 +220,43 @@ class StudentAccountManagementController extends Controller
             ];
             return ResultResponse::success($data);
         }
+
+    public function getRanking(Request $request){
+        $currentUser = $request->user();
+        
+        // Find current user's rank
+        $currentUserDiamonds = $currentUser->student->diamonds ?? 0;
+        $rank = \App\Models\Student::where('diamonds', '>', $currentUserDiamonds)->count() + 1;
+
+        // Get top 10 students
+        $topStudents = User::where('role', UserRole::STUDENT)
+            ->join('students', 'users.id', '=', 'students.user_id')
+            ->orderBy('students.diamonds', 'desc')
+            ->take(10)
+            ->select('users.*', 'students.diamonds')
+            ->get();
+
+        $ranking = [];
+        foreach ($topStudents as $index => $user) {
+            $ranking[] = [
+                'rank' => $index + 1,
+                'name' => $user->name,
+                'progress' => $user->quizzes_progress,
+                'diamonds' => (int)$user->diamonds,
+                'avatar' => $user->avatar ? url('storage/'.$user->avatar) : null,
+            ];
+        }
+
+        return ResultResponse::success([
+            'ranking' => $ranking,
+            'current_user' => [
+                'rank' => $rank,
+                'name' => $currentUser->name,
+                'progress' => $currentUser->quizzes_progress,
+                'diamonds' => (int)$currentUserDiamonds,
+                'avatar' => $currentUser->avatar ? url('storage/'.$currentUser->avatar) : null,
+            ],
+        ]);
+    }
     
 }

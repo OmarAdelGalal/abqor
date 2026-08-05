@@ -160,6 +160,7 @@ Route::prefix('user')->group(function () {
             Route::post('verify_email_change', [StudentAccountManagementController::class, 'verifyEmailChangeOtp']);
             Route::post('update_fcm_token', [StudentAccountManagementController::class, 'updateFcmToken']);
             Route::post('update_program', [StudentAccountManagementController::class, 'updateProgram']);
+            Route::get('ranking', [StudentAccountManagementController::class, 'getRanking']);
         });
 
         // ! deprecated

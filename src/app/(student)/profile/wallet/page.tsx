@@ -32,6 +32,8 @@ export default function WalletPage() {
   const router = useRouter();
   const { logout } = useAuthStore();
   const [balance, setBalance] = useState(213545.54);
+  const [showAddFundsModal, setShowAddFundsModal] = useState(false);
+  const [selectedMethod, setSelectedMethod] = useState('');
 
   const handleLogout = () => {
     logout();
@@ -138,7 +140,10 @@ export default function WalletPage() {
               </div>
 
               <div className="z-10 mt-auto">
-                <button className="bg-white text-gray-800 font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors w-fit shadow-sm text-sm">
+                <button 
+                  onClick={() => setShowAddFundsModal(true)}
+                  className="bg-white text-gray-800 font-bold py-2.5 px-5 rounded-xl flex items-center gap-2 hover:bg-gray-50 transition-colors w-fit shadow-sm text-sm"
+                >
                   <span>اضافة رصيد</span>
                   <div className="bg-gray-800 text-white rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
                     $
@@ -185,6 +190,63 @@ export default function WalletPage() {
 
         </div>
       </main>
+
+      {/* Add Funds Modal */}
+      {showAddFundsModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm" onClick={() => setShowAddFundsModal(false)}>
+          <div 
+            className="bg-white rounded-3xl w-full max-w-[400px] p-8 shadow-xl relative animate-in fade-in zoom-in duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-black text-[#004e70] text-center mb-8">إختر طريقة الشحن</h2>
+            
+            <div className="flex flex-col gap-3 mb-6">
+              {/* Method 1 */}
+              <button 
+                onClick={() => setSelectedMethod('electronic')}
+                className={`flex items-center justify-center gap-2 p-4 rounded-2xl border transition-all ${selectedMethod === 'electronic' ? 'border-[#004e70] ring-1 ring-[#004e70]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+              >
+                <span className="font-bold text-gray-700 text-sm">الدفع الإلكتروني</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-8 h-5 bg-[#002f6c] rounded flex items-center justify-center">
+                    <span className="text-white text-[9px] font-bold tracking-tighter">CIB</span>
+                  </div>
+                  <div className="w-8 h-5 bg-[#00885e] rounded flex items-center justify-center">
+                    <span className="text-yellow-400 text-[10px] font-bold">بريد</span>
+                  </div>
+                </div>
+              </button>
+
+              {/* Method 2 */}
+              <button 
+                onClick={() => setSelectedMethod('transfer')}
+                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border transition-all ${selectedMethod === 'transfer' ? 'border-[#004e70] ring-1 ring-[#004e70]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+              >
+                <span className="font-bold text-gray-700 text-sm">التحويل عبر البنك/ البريد</span>
+              </button>
+
+              {/* Method 3 */}
+              <button 
+                onClick={() => setSelectedMethod('card')}
+                className={`flex items-center justify-center gap-3 p-4 rounded-2xl border transition-all ${selectedMethod === 'card' ? 'border-[#004e70] ring-1 ring-[#004e70]' : 'border-gray-200 hover:border-gray-300 bg-white'}`}
+              >
+                <span className="font-bold text-gray-700 text-sm">بطاقة التعبئة</span>
+              </button>
+            </div>
+
+            <button 
+              disabled={!selectedMethod}
+              onClick={() => {
+                setShowAddFundsModal(false);
+                setSelectedMethod('');
+              }}
+              className="w-full bg-[#004e70] hover:bg-[#003b55] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-2xl transition-colors shadow-sm"
+            >
+              المتابعة
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

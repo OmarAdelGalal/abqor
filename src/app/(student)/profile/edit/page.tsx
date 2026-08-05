@@ -387,7 +387,7 @@ export default function EditProfilePage() {
                   >
                     <option value="" disabled>اختر السنة</option>
                     {educationYears.filter(y => !educationLevel || y.education_level_id?.toString() === educationLevel).map((yr) => (
-                      <option key={yr.id} value={yr.id}>{yr.name}</option>
+                      <option key={yr.id} value={yr.id}>{yr.title || yr.name}</option>
                     ))}
                   </select>
                 </div>

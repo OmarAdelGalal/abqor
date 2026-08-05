@@ -20,11 +20,13 @@ import {
   Eye,
   EyeOff,
   BookOpen,
-  MapPin
+  MapPin,
+  ChevronDown
 } from 'lucide-react';
 import { useAuthStore } from '@/store/useAuthStore';
 import { useRouter } from 'next/navigation';
 import { authApi } from '@/lib/auth';
+import CustomSelect from '@/components/ui/CustomSelect';
 
 const WILAYAS = [
   "أدرار", "الشلف", "الأغواط", "أم البواقي", "باتنة", "بجاية", "بسكرة", "بشار", "البليدة", "البويرة",
@@ -61,6 +63,10 @@ export default function EditProfilePage() {
   // OTP State
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [otpCode, setOtpCode] = useState('');
+
+  // UI State
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Dropdown Data
   const [educationLevels, setEducationLevels] = useState<any[]>([]);
@@ -111,7 +117,7 @@ export default function EditProfilePage() {
         const res = await authApi.changeAvatar(formData);
         if (res.avatar) {
           setAvatar(`https://mrstudy.net/storage/${res.avatar}`);
-          alert('تم تحديث الصورة بنجاح');
+          setShowSuccessModal(true);
         }
       } catch (error: any) {
         alert(error?.message || 'فشل رفع الصورة');
@@ -152,7 +158,7 @@ export default function EditProfilePage() {
         await authApi.changeEmail(email);
         setShowOtpModal(true);
       } else {
-        alert('تم الحفظ بنجاح');
+        setShowSuccessModal(true);
         fetchProfile();
       }
 
@@ -167,7 +173,7 @@ export default function EditProfilePage() {
     if (!otpCode) return;
     try {
       await authApi.verifyEmailChange(email, otpCode);
-      alert('تم تحديث البريد الإلكتروني بنجاح');
+      setShowSuccessModal(true);
       setShowOtpModal(false);
       setOriginalEmail(email);
       setOtpCode('');
@@ -177,15 +183,13 @@ export default function EditProfilePage() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (window.confirm('هل أنت متأكد من حذف حسابك نهائياً؟ لا يمكن التراجع عن هذا الإجراء.')) {
-      try {
-        await authApi.deleteAccount();
-        logout();
-        router.push('/login');
-      } catch (error: any) {
-        alert(error?.message || 'حدث خطأ أثناء حذف الحساب');
-      }
+  const confirmDeleteAccount = async () => {
+    try {
+      await authApi.deleteAccount();
+      logout();
+      router.push('/login');
+    } catch (error: any) {
+      alert(error?.message || 'حدث خطأ أثناء حذف الحساب');
     }
   };
 
@@ -344,12 +348,14 @@ export default function EditProfilePage() {
                   </label>
                   <div className="flex gap-4">
                     <button 
+                      type="button"
                       onClick={() => setGender('male')}
                       className={`flex-1 py-3 rounded-xl font-bold transition-colors ${gender === 'male' ? 'bg-[#45B7C7] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
                       ذكر
                     </button>
                     <button 
+                      type="button"
                       onClick={() => setGender('female')}
                       className={`flex-1 py-3 rounded-xl font-bold transition-colors ${gender === 'female' ? 'bg-[#45B7C7] text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                     >
@@ -363,16 +369,12 @@ export default function EditProfilePage() {
                   <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-[#45B7C7]" /> المستوى الدراسي
                   </label>
-                  <select 
+                  <CustomSelect
                     value={educationLevel}
-                    onChange={(e) => setEducationLevel(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors bg-white appearance-none text-right"
-                  >
-                    <option value="" disabled>اختر المستوى</option>
-                    {educationLevels.map((lvl) => (
-                      <option key={lvl.id} value={lvl.id}>{lvl.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setEducationLevel(val)}
+                    placeholder="اختر المستوى"
+                    options={educationLevels.map((lvl) => ({ value: lvl.id.toString(), label: lvl.name }))}
+                  />
                 </div>
 
                 {/* Education Year */}
@@ -380,16 +382,15 @@ export default function EditProfilePage() {
                   <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <BookOpen className="w-4 h-4 text-[#45B7C7]" /> السنة الدراسية
                   </label>
-                  <select 
+                  <CustomSelect
                     value={educationYear}
-                    onChange={(e) => setEducationYear(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors bg-white appearance-none text-right"
-                  >
-                    <option value="" disabled>اختر السنة</option>
-                    {educationYears.filter(y => !educationLevel || y.education_level_id?.toString() === educationLevel).map((yr) => (
-                      <option key={yr.id} value={yr.id}>{yr.title || yr.name}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setEducationYear(val)}
+                    placeholder="اختر السنة"
+                    options={educationYears
+                      .filter(y => !educationLevel || y.education_level_id?.toString() === educationLevel)
+                      .map((yr) => ({ value: yr.id.toString(), label: yr.title || yr.name }))}
+                    disabled={!educationLevel}
+                  />
                 </div>
 
                 {/* Wilaya */}
@@ -397,16 +398,12 @@ export default function EditProfilePage() {
                   <label className="text-sm font-bold text-gray-700 flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-[#45B7C7]" /> الولاية
                   </label>
-                  <select 
+                  <CustomSelect
                     value={wilaya}
-                    onChange={(e) => setWilaya(e.target.value)}
-                    className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors bg-white appearance-none text-right"
-                  >
-                    <option value="" disabled>اختر الولاية</option>
-                    {WILAYAS.map((w) => (
-                      <option key={w} value={w}>{w}</option>
-                    ))}
-                  </select>
+                    onChange={(val) => setWilaya(val)}
+                    placeholder="اختر الولاية"
+                    options={WILAYAS.map((w) => ({ value: w, label: w }))}
+                  />
                 </div>
 
                 {/* Old Password */}
@@ -419,7 +416,7 @@ export default function EditProfilePage() {
                       type={showOldPassword ? "text" : "password"}
                       value={oldPassword}
                       onChange={(e) => setOldPassword(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors text-left font-sans"
+                      className="w-full pr-4 pl-12 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors text-right font-sans"
                       dir="ltr"
                       placeholder="••••••••"
                     />
@@ -443,7 +440,7 @@ export default function EditProfilePage() {
                       type={showNewPassword ? "text" : "password"}
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors text-left font-sans"
+                      className="w-full pr-4 pl-12 py-3 rounded-xl border border-gray-200 focus:outline-none focus:border-[#45B7C7] transition-colors text-right font-sans"
                       dir="ltr"
                       placeholder="••••••••"
                     />
@@ -462,7 +459,7 @@ export default function EditProfilePage() {
              {/* Actions */}
              <div className="flex flex-col sm:flex-row gap-4 max-w-xl mx-auto w-full mt-10">
                 <button 
-                  onClick={handleDeleteAccount}
+                  onClick={() => setShowDeleteModal(true)}
                   className="flex-1 py-3 rounded-xl font-bold text-red-500 bg-white border border-red-200 hover:bg-red-50 transition-colors"
                 >
                   حذف الحساب
@@ -479,6 +476,58 @@ export default function EditProfilePage() {
           </div>
         </div>
       </main>
+
+      {/* Success Modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full relative flex flex-col items-center shadow-xl">
+            <div className="w-24 h-24 bg-[#e5f5f7] rounded-full flex items-center justify-center mb-6">
+               <div className="w-12 h-12 bg-[#45B7C7] rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="3" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+               </div>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-8 text-center">تم حفظ التغييرات بنجاح</h3>
+            
+            <button 
+              onClick={() => setShowSuccessModal(false)}
+              className="w-full py-3.5 rounded-xl font-bold text-white bg-[#0A3D4D] hover:bg-[#1a5b6e] transition-colors"
+            >
+              حسناً
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[2rem] p-8 max-w-sm w-full relative flex flex-col items-center shadow-xl">
+            <img src="/home/cry.png" alt="Sad Face" className="w-24 h-24 mb-6 object-contain" onError={(e) => { e.currentTarget.style.display = 'none' }} />
+            <h3 className="text-xl font-bold text-gray-800 mb-2 text-center">هل أنت متأكد؟</h3>
+            <p className="text-gray-500 text-sm text-center mb-8">هل أنت متأكد من حذف حسابك نهائياً؟ لا يمكن التراجع عن هذا الإجراء.</p>
+            
+            <div className="flex gap-3 w-full">
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                className="flex-1 py-3.5 rounded-xl font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 transition-colors"
+              >
+                تراجع
+              </button>
+              <button 
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  confirmDeleteAccount();
+                }}
+                className="flex-1 py-3.5 rounded-xl font-bold text-white bg-red-500 hover:bg-red-600 transition-colors"
+              >
+                حذف
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OTP Modal */}
       {showOtpModal && (

@@ -94,7 +94,26 @@ export const authApi = {
     return await api.get('/user/account/account_view');
   },
   getRanking: async () => {
-    return await api.get('/user/account/ranking');
+    // TEMPORARY MOCK DATA: Using mock data until the backend update is deployed to production.
+    // Replace with: return await api.get('/user/account/ranking'); once deployed.
+    return {
+      ranking: [
+        { rank: 1, name: 'علي العالي', progress: 12, diamonds: 500, avatar: '/070f32d8344482d233c60ed52e8fab2be5848260.png' },
+        { rank: 2, name: 'نور محمد', progress: 12, diamonds: 500, avatar: '/8aef59e22b486ce79cac17963eb0fe241c3dc4f1.png' },
+        { rank: 3, name: 'سارة أحمد', progress: 12, diamonds: 500, avatar: '/9bb9cc83266f8df2d0b844971b105eb1084227ff.png' },
+        { rank: 4, name: 'شيماء أبو القميز', progress: 12, diamonds: 500, avatar: '/c518e28edf6bef8d0d46fdbfb27871175eb44f11.png' },
+        { rank: 5, name: 'أحمد محمود', progress: 12, diamonds: 500, avatar: '/boy2.png' },
+        { rank: 6, name: 'عمر عادل', progress: 12, diamonds: 500, avatar: '/image 24.png' },
+        { rank: 7, name: 'فاطمة محمد', progress: 12, diamonds: 500, avatar: '/boy2.png' },
+      ],
+      current_user: {
+        rank: 4,
+        name: 'شيماء أبو القميز',
+        progress: 12,
+        diamonds: 500,
+        avatar: '/c518e28edf6bef8d0d46fdbfb27871175eb44f11.png'
+      }
+    };
   }
 };
 // Trigger HMR

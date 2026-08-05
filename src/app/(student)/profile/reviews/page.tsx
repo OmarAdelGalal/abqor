@@ -206,7 +206,7 @@ export default function ReviewsPage() {
                 items.map((item) => {
                   const isSelected = selectedItemId === item.id;
                   // Handle both book image and teacher avatar structures
-                  const imageSrc = item.avatar ? (item.avatar.startsWith('http') ? item.avatar : `https://mrstudy.net/storage/${item.avatar}`) : (item.cover ? `https://mrstudy.net/storage/${item.cover}` : '/image 24.png');
+                  const imageSrc = item.avatar ? (item.avatar.startsWith('http') ? item.avatar : `https://mrstudy.net/storage/${item.avatar}`) : (item.image ? `https://mrstudy.net/storage/${item.image}` : (item.cover ? `https://mrstudy.net/storage/${item.cover}` : '/image 24.png'));
                   
                   return (
                     <button 
@@ -217,12 +217,12 @@ export default function ReviewsPage() {
                       <div className={`w-[70px] h-[70px] rounded-full p-[3px] ${isSelected ? 'bg-gradient-to-tr from-[#008db9] to-[#45B7C7] shadow-md' : 'bg-transparent'}`}>
                          <img 
                            src={imageSrc} 
-                           alt={item.name} 
+                           alt={item.name || item.title || 'صورة'} 
                            className="w-full h-full rounded-full object-cover bg-white" 
                          />
                       </div>
                       <span className={`font-bold text-sm ${isSelected ? 'text-[#005c8a]' : 'text-gray-500'}`}>
-                        {item.name || (item.subject?.name ?? 'بدون اسم')}
+                        {item.name || item.title || (item.subject?.name ?? 'بدون اسم')}
                       </span>
                     </button>
                   );

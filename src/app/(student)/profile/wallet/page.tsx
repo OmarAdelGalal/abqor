@@ -238,6 +238,9 @@ export default function WalletPage() {
               disabled={!selectedMethod}
               onClick={() => {
                 setShowAddFundsModal(false);
+                if (selectedMethod === 'electronic') {
+                  router.push('/profile/wallet/electronic');
+                }
                 setSelectedMethod('');
               }}
               className="w-full bg-[#004e70] hover:bg-[#003b55] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-2xl transition-colors shadow-sm"

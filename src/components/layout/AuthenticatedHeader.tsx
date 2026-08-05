@@ -1,8 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { authApi } from '@/lib/auth';
+import { useAuthStore } from '@/store/useAuthStore';
 
 interface AuthenticatedHeaderProps {
   health?: number;
@@ -10,8 +12,38 @@ interface AuthenticatedHeaderProps {
   flame?: number;
 }
 
-export default function AuthenticatedHeader({ health = 0, diamonds = 0, flame = 0 }: AuthenticatedHeaderProps) {
+export default function AuthenticatedHeader({ health: propsHealth, diamonds: propsDiamonds, flame: propsFlame }: AuthenticatedHeaderProps) {
   const pathname = usePathname();
+  const { user } = useAuthStore();
+  
+  const [stats, setStats] = useState({
+    flames: propsFlame || 0,
+    diamonds: propsDiamonds || 0,
+    health: propsHealth || 0,
+    avatar: user?.avatar ? `https://mrstudy.net/storage/${user.avatar}` : '/image 24.png',
+    progress: 0
+  });
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await authApi.getAccountView();
+        if (data) {
+          setStats(prev => ({
+            ...prev,
+            flames: data.flames || 0,
+            diamonds: data.diamonds || 0,
+            avatar: data.avatar ? `https://mrstudy.net/storage/${data.avatar}` : prev.avatar,
+            progress: data.quizzesProgress || 0
+          }));
+        }
+      } catch (error) {
+        console.error("Failed to fetch account view:", error);
+      }
+    };
+    
+    fetchStats();
+  }, []);
 
   const navItems = [
     { name: 'الرئيسية', path: '/dashboard', icon: '/home/home.png' },
@@ -53,26 +85,26 @@ export default function AuthenticatedHeader({ health = 0, diamonds = 0, flame = 
           {/* Avatar with Progress */}
           <div className="relative">
             <div className="w-10 h-10 rounded-full bg-gray-200 border-2 border-green-500 overflow-hidden">
-              <img src="/image 24.png" alt="User Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=User&background=random' }} />
+              <img src={stats.avatar} alt="User Avatar" className="w-full h-full object-cover" onError={(e) => { e.currentTarget.src = 'https://ui-avatars.com/api/?name=User&background=random' }} />
             </div>
             <div className="absolute -bottom-2 -left-1 bg-white border border-green-500 text-green-600 text-[9px] font-bold px-1.5 rounded-full">
-              58%
+              {stats.progress}%
             </div>
           </div>
 
           <div className="flex items-center gap-4 text-sm font-bold">
             <div className="flex items-center gap-1.5 text-gray-700">
-              <span>{health}</span>
+              <span>{stats.health}</span>
               <img src="/home/hart icon.png" alt="Heart" className="w-4 h-4 object-contain" />
             </div>
             <div className="h-4 w-[1px] bg-gray-300"></div>
             <div className="flex items-center gap-1.5 text-gray-700">
-              <span>{diamonds}</span>
+              <span>{stats.diamonds}</span>
               <img src="/home/dimond icon.png" alt="Diamond" className="w-4 h-4 object-contain" />
             </div>
             <div className="h-4 w-[1px] bg-gray-300"></div>
             <div className="flex items-center gap-1.5 text-gray-700">
-              <span>{flame}</span>
+              <span>{stats.flames}</span>
               <img src="/home/fire icon.png" alt="Flame" className="w-4 h-4 object-contain" />
             </div>
           </div>

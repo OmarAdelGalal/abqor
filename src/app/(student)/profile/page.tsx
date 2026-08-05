@@ -35,8 +35,15 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const data = await authApi.getUserProfile();
-        setProfileData(data);
+        const [profileRes, statsRes] = await Promise.all([
+          authApi.getUserProfile(),
+          authApi.getAccountView().catch(() => null)
+        ]);
+        
+        setProfileData({
+          ...profileRes,
+          stats: statsRes
+        });
       } catch (error) {
         console.error("Failed to fetch profile info:", error);
       } finally {
@@ -167,7 +174,7 @@ export default function ProfilePage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
               <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.profile?.jewels ?? profileData?.jewels ?? 500}</span>
+                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.stats?.diamonds ?? profileData?.profile?.jewels ?? profileData?.jewels ?? 500}</span>
                   <Gem className="w-6 h-6 text-blue-400 fill-blue-400" />
                 </div>
                 <span className="text-gray-400 text-sm font-medium">إجمالي الجواهر</span>
@@ -175,7 +182,7 @@ export default function ProfilePage() {
               
               <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.profile?.streak ?? profileData?.streak ?? 120}</span>
+                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.stats?.flames ?? profileData?.profile?.streak ?? profileData?.streak ?? 120}</span>
                   <Flame className="w-6 h-6 text-orange-500 fill-orange-500" />
                 </div>
                 <span className="text-gray-400 text-sm font-medium">يوم حماس</span>
@@ -183,7 +190,7 @@ export default function ProfilePage() {
               
               <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-black text-2xl text-[#1a5b6e]">%{(profileData?.profile?.progress ?? profileData?.progress ?? 98)}</span>
+                  <span className="font-black text-2xl text-[#1a5b6e]">%{(profileData?.stats?.quizzesProgress ?? profileData?.profile?.progress ?? profileData?.progress ?? 98)}</span>
                   <Clock className="w-6 h-6 text-[#8cd6ca]" />
                 </div>
                 <span className="text-gray-400 text-sm font-medium">التقدم في الدروس</span>

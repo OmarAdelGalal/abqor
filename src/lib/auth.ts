@@ -88,5 +88,9 @@ export const authApi = {
 
   deleteAccount: async () => {
     return await api.post('/user/account/delete_account');
+  },
+
+  getAccountView: async () => {
+    return await api.get('/user/account/account_view');
   }
 };

@@ -146,7 +146,7 @@ export default function ProfilePage() {
                   />
                 </svg>
                 <div className="absolute inset-0 rounded-full overflow-hidden border-[6px] border-transparent">
-                  <img src={user?.avatar || "/c518e28edf6bef8d0d46fdbfb27871175eb44f11.png"} alt="Profile" className="w-full h-full object-cover rounded-full" />
+                  <img src={profileData?.profile?.avatar ? `https://mrstudy.net/storage/${profileData.profile.avatar}` : (user?.avatar || "/c518e28edf6bef8d0d46fdbfb27871175eb44f11.png")} alt="Profile" className="w-full h-full object-cover rounded-full" />
                 </div>
                 {/* Progress Badge */}
                 <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 bg-white px-3 py-0.5 rounded-full text-green-500 font-bold text-xs border border-gray-100 shadow-sm z-10 whitespace-nowrap">
@@ -155,24 +155,19 @@ export default function ProfilePage() {
               </div>
               
               <h2 className="text-xl font-black text-gray-800 mt-2">
-                {profileData?.user?.name || profileData?.name || user?.name || 'شيماء أبو القمبز'}
+                {profileData?.profile?.name || profileData?.user?.name || profileData?.name || user?.name || 'شيماء أبو القمبز'}
               </h2>
               <p className="text-gray-500 text-sm mt-1">
-                {profileData?.user?.email || profileData?.email || user?.email || 'example@example.com'}
+                {profileData?.profile?.email || profileData?.user?.email || profileData?.email || user?.email || 'example@example.com'}
               </p>
             </div>
-            {/* DEBUG BLOCK TO SEE BACKEND RESPONSE */}
-            {profileData && (
-              <div className="bg-gray-100 p-4 rounded text-left" dir="ltr">
-                <pre className="text-xs text-black overflow-auto max-h-40">{JSON.stringify(profileData, null, 2)}</pre>
-              </div>
-            )}
+
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">
               <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.jewels ?? 500}</span>
+                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.profile?.jewels ?? profileData?.jewels ?? 500}</span>
                   <Gem className="w-6 h-6 text-blue-400 fill-blue-400" />
                 </div>
                 <span className="text-gray-400 text-sm font-medium">إجمالي الجواهر</span>
@@ -180,7 +175,7 @@ export default function ProfilePage() {
               
               <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.streak ?? 120}</span>
+                  <span className="font-black text-2xl text-[#1a5b6e]">{profileData?.profile?.streak ?? profileData?.streak ?? 120}</span>
                   <Flame className="w-6 h-6 text-orange-500 fill-orange-500" />
                 </div>
                 <span className="text-gray-400 text-sm font-medium">يوم حماس</span>
@@ -188,7 +183,7 @@ export default function ProfilePage() {
               
               <div className="bg-white rounded-2xl p-5 flex flex-col items-center justify-center text-center shadow-sm border border-gray-100">
                 <div className="flex items-center gap-2 mb-2">
-                  <span className="font-black text-2xl text-[#1a5b6e]">%{(profileData?.progress ?? 98)}</span>
+                  <span className="font-black text-2xl text-[#1a5b6e]">%{(profileData?.profile?.progress ?? profileData?.progress ?? 98)}</span>
                   <Clock className="w-6 h-6 text-[#8cd6ca]" />
                 </div>
                 <span className="text-gray-400 text-sm font-medium">التقدم في الدروس</span>
@@ -237,7 +232,7 @@ export default function ProfilePage() {
                           <Trophy className="w-8 h-8 text-yellow-400 fill-yellow-400" />
                        </div>
                      </div>
-                     <span className="font-black text-4xl mt-1 leading-none">#{profileData?.rank ?? 12}</span>
+                     <span className="font-black text-4xl mt-1 leading-none">#{profileData?.profile?.rank ?? profileData?.rank ?? 12}</span>
                      <div className="flex items-center gap-1 mt-3">
                         <span className="text-sm font-bold opacity-90">ارتفعت 3 مراحل هذا الأسبوع</span>
                         <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 10l7-7m0 0l7 7m-7-7v18"/></svg>
@@ -269,7 +264,7 @@ export default function ProfilePage() {
                        </div>
                      </div>
                      <span className="text-white/80 text-sm mt-2 mb-1">الرصيد المتوفر</span>
-                     <span className="font-black text-3xl leading-none font-sans" dir="ltr">{profileData?.wallet_balance ? `${profileData.wallet_balance} د.ج` : '213,545.54 د.ج'}</span>
+                     <span className="font-black text-3xl leading-none font-sans" dir="ltr">{(profileData?.profile?.wallet_balance ?? profileData?.wallet_balance) ? `${profileData?.profile?.wallet_balance ?? profileData?.wallet_balance} د.ج` : '213,545.54 د.ج'}</span>
                    </div>
                 </div>
               </div>

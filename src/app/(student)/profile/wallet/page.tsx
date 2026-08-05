@@ -33,7 +33,7 @@ export default function WalletPage() {
   const { logout } = useAuthStore();
   const [balance, setBalance] = useState(213545.54);
   const [showAddFundsModal, setShowAddFundsModal] = useState(false);
-  const [selectedMethod, setSelectedMethod] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('electronic');
 
   const handleLogout = () => {
     logout();
@@ -241,7 +241,7 @@ export default function WalletPage() {
                 if (selectedMethod === 'electronic') {
                   router.push('/profile/wallet/electronic');
                 }
-                setSelectedMethod('');
+                setSelectedMethod('electronic');
               }}
               className="w-full bg-[#004e70] hover:bg-[#003b55] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3.5 rounded-2xl transition-colors shadow-sm"
             >

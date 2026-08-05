@@ -154,9 +154,19 @@ export default function ProfilePage() {
                 </div>
               </div>
               
-              <h2 className="text-xl font-black text-gray-800 mt-2">{profileData?.name || user?.name || 'شيماء أبو القمبز'}</h2>
-              <p className="text-gray-500 text-sm mt-1">{profileData?.email || user?.email || 'example@example.com'}</p>
+              <h2 className="text-xl font-black text-gray-800 mt-2">
+                {profileData?.user?.name || profileData?.name || user?.name || 'شيماء أبو القمبز'}
+              </h2>
+              <p className="text-gray-500 text-sm mt-1">
+                {profileData?.user?.email || profileData?.email || user?.email || 'example@example.com'}
+              </p>
             </div>
+            {/* DEBUG BLOCK TO SEE BACKEND RESPONSE */}
+            {profileData && (
+              <div className="bg-gray-100 p-4 rounded text-left" dir="ltr">
+                <pre className="text-xs text-black overflow-auto max-h-40">{JSON.stringify(profileData, null, 2)}</pre>
+              </div>
+            )}
 
             {/* Stats Row */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-2">

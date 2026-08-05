@@ -63,6 +63,6 @@ export const authApi = {
   },
 
   getUserProfile: async () => {
-    return await api.get('/user/account');
+    return await api.get('/user/account/');
   }
 };

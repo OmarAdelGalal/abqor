@@ -61,7 +61,6 @@ export default function ProfilePage() {
 
   const menuItems = [
     { title: 'تعديل الحساب', icon: <UserPen className="w-5 h-5" />, href: '/profile/edit', color: 'text-orange-500' },
-    { title: 'المحفظة', icon: <Wallet className="w-5 h-5" />, href: '/profile/wallet', color: 'text-[#45B7C7]' },
     { title: 'آراء التلاميذ', icon: <MessageSquareHeart className="w-5 h-5" />, href: '/reviews', color: 'text-yellow-500' },
     { title: 'الاشتراكات', icon: <CreditCard className="w-5 h-5" />, href: '/subscriptions', color: 'text-blue-500' },
     { title: 'من نحن', icon: <Users className="w-5 h-5" />, href: '/about', color: 'text-slate-700' },
@@ -259,10 +258,10 @@ export default function ProfilePage() {
 
               <div className="flex justify-between items-start z-10 h-full">
                 <div className="flex justify-between items-end w-full h-full mt-auto">
-                   <button className="bg-white text-[#0f7eb5] px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm">
+                   <Link href="/profile/wallet" className="bg-white text-[#0f7eb5] px-4 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-gray-50 transition-colors shadow-sm">
                       <span>عرض تفاصيل المحفظة</span>
                       <Wallet className="w-5 h-5 text-[#0f7eb5]" />
-                   </button>
+                   </Link>
                    
                    <div className="flex flex-col items-end">
                      <div className="flex items-center gap-3">

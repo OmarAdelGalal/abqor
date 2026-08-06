@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Share2, Play, Lock, FileText, X, MessageCircle, Clock } from 'lucide-react';

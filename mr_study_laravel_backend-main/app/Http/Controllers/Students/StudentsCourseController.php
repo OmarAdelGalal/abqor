@@ -796,8 +796,25 @@ class StudentsCourseController extends Controller
     //get reviews of course
     public function getCourseReviews(Course $course)
     {
-        $reviews = $course->reviews()->latest()->get();
+        $reviews = $course->reviews()->with('student')->latest()->get();
         return ResultResponse::success($reviews);
+    }
+
+    //add course review
+    public function addReview(Request $request, Course $course)
+    {
+        $request->validate([
+            'rate' => 'required|integer|min:1|max:5',
+            'comment' => 'required|string',
+        ]);
+
+        $review = $course->reviews()->create([
+            'user_id' => auth()->id(),
+            'rate' => $request->rate,
+            'comment' => $request->comment,
+        ]);
+
+        return ResultResponse::success($review);
     }
 
     //get teacher

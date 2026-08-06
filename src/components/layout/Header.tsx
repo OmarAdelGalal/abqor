@@ -7,9 +7,32 @@ import AuthModal from '@/components/auth/AuthModal';
 
 export default function Header() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [hasToken, setHasToken] = useState(false);
   const pathname = usePathname();
   
-  const authRoutes = ['/dashboard', '/learning', '/account', '/notifications', '/profile'];
+  const authRoutes = [
+    '/dashboard', 
+    '/learning', 
+    '/account', 
+    '/notifications', 
+    '/profile', 
+    '/payments', 
+    '/subscriptions', 
+    '/terms', 
+    '/about', 
+    '/faq', 
+    '/ranking', 
+    '/store', 
+    '/curriculum',
+    '/quiz'
+  ];
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setHasToken(!!localStorage.getItem('abqor_token'));
+    }
+  }, [pathname]);
+
   const isAuthRoute = authRoutes.some(route => pathname?.startsWith(route));
 
   useEffect(() => {
@@ -18,7 +41,8 @@ export default function Header() {
     return () => window.removeEventListener('open-auth-modal', handleOpen);
   }, []);
 
-  if (isAuthRoute) return null;
+  // Hide the unauthenticated header if on any student page or if user is logged in
+  if (isAuthRoute || hasToken) return null;
 
   return (
     <>

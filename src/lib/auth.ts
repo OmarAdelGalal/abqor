@@ -91,7 +91,12 @@ export const authApi = {
   },
 
   getAccountView: async () => {
-    return await api.get('/user/account/account_view');
+    try {
+      return await api.get('/user/account/account_view');
+    } catch (error) {
+      console.warn('authApi.getAccountView failed:', error);
+      return null;
+    }
   },
   getRanking: async () => {
     // TEMPORARY MOCK DATA: Using mock data until the backend update is deployed to production.

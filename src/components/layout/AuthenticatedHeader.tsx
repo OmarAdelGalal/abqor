@@ -25,20 +25,32 @@ export default function AuthenticatedHeader({ health: propsHealth, diamonds: pro
   });
 
   useEffect(() => {
+    if (propsHealth !== undefined || propsDiamonds !== undefined || propsFlame !== undefined) {
+      setStats(prev => ({
+        ...prev,
+        health: propsHealth ?? prev.health,
+        diamonds: propsDiamonds ?? prev.diamonds,
+        flames: propsFlame ?? prev.flames
+      }));
+    }
+  }, [propsHealth, propsDiamonds, propsFlame]);
+
+  useEffect(() => {
     const fetchStats = async () => {
       try {
         const data = await authApi.getAccountView();
         if (data) {
           setStats(prev => ({
             ...prev,
-            flames: data.flames || 0,
-            diamonds: data.diamonds || 0,
-            avatar: data.avatar ? `https://mrstudy.net/storage/${data.avatar}` : prev.avatar,
-            progress: data.quizzesProgress || 0
+            flames: data.flames || data.flame || prev.flames,
+            diamonds: data.diamonds || prev.diamonds,
+            health: data.health || prev.health,
+            avatar: data.avatar ? (data.avatar.startsWith('http') ? data.avatar : `https://mrstudy.net/storage/${data.avatar}`) : prev.avatar,
+            progress: data.quizzesProgress || data.progress || prev.progress
           }));
         }
       } catch (error) {
-        console.error("Failed to fetch account view:", error);
+        console.warn("Failed to fetch account view:", error);
       }
     };
     

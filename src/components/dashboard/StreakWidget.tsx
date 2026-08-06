@@ -3,10 +3,12 @@ import { CheckCircle2 } from 'lucide-react';
 
 interface StreakWidgetProps {
   flame?: number;
+  days?: number;
 }
 
-export default function StreakWidget({ flame = 0 }: StreakWidgetProps) {
-  const days = [
+export default function StreakWidget({ flame, days: daysProp }: StreakWidgetProps) {
+  const displayCount = flame ?? daysProp ?? 0;
+  const weekDays = [
     { label: 'سبت', checked: true },
     { label: 'أحد', checked: false },
     { label: 'إثنين', checked: false },
@@ -25,7 +27,7 @@ export default function StreakWidget({ flame = 0 }: StreakWidgetProps) {
           <span className="text-gray-600 font-bold text-sm">أيام الحماس</span>
           <img src="/home/fire icon.png" alt="Flame" className="w-5 h-5 object-contain" />
         </div>
-        <div className="text-3xl font-black text-[#004e70]">{flame}</div>
+        <div className="text-3xl font-black text-[#004e70]">{displayCount}</div>
       </div>
       
       {/* Subtitle */}
@@ -35,7 +37,7 @@ export default function StreakWidget({ flame = 0 }: StreakWidgetProps) {
 
       {/* Days of Week */}
       <div className="w-full flex justify-between items-center bg-white rounded-2xl py-3 px-2 shadow-sm border border-gray-100">
-        {days.map((day, idx) => (
+        {weekDays.map((day, idx) => (
           <div key={idx} className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold text-gray-500">{day.label}</span>
             {day.checked ? (

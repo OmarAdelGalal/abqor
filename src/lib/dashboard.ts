@@ -2,7 +2,12 @@ import api from './api';
 
 export const dashboardApi = {
   getAccountView: async () => {
-    return await api.get('/user/account/account_view');
+    try {
+      return await api.get('/user/account/account_view');
+    } catch (error) {
+      console.warn('dashboardApi.getAccountView failed:', error);
+      return null;
+    }
   },
 
   getProfile: async () => {

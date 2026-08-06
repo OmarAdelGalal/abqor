@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Crown } from 'lucide-react';
 
 export default function UpgradeWidget() {
@@ -35,10 +36,13 @@ export default function UpgradeWidget() {
         وصول غير محدود للدروس والملخصات والعديد من المميزات الحصرية
       </p>
 
-      {/* Upgrade Button */}
-      <button className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-600 hover:to-yellow-500 text-white font-bold py-3 rounded-xl shadow-lg relative z-10 transition-all">
+      {/* Upgrade Button - Links to /payments */}
+      <Link
+        href="/payments"
+        className="w-full bg-gradient-to-r from-yellow-500 to-yellow-400 hover:from-yellow-600 hover:to-yellow-500 text-white font-bold py-3 rounded-xl shadow-lg relative z-10 transition-all text-center block"
+      >
         ترقية الحساب
-      </button>
+      </Link>
 
     </div>
   );

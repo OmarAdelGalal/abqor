@@ -15,8 +15,8 @@ import { coursesApi } from '@/lib/courses';
 export default function LearningPage() {
   const [activeLevel, setActiveLevel] = useState<'BAC' | 'BEM'>('BAC');
   const [activeBottomTab, setActiveBottomTab] = useState<'all' | 'mine'>('all');
-  const [activeSubject, setActiveSubject] = useState<string>('arabic');
-  
+  const [activeSubject, setActiveSubject] = useState<string>('');
+
   const [coursesData, setCoursesData] = useState<Record<string, CourseData[]>>({});
   const [myCoursesData, setMyCoursesData] = useState<MyCourseData[]>([]);
   const [subjects, setSubjects] = useState<any[]>([]);
@@ -44,21 +44,25 @@ export default function LearningPage() {
           subjectsPromise,
           myCoursesPromise
         ]);
-        
+
         if (coursesRes) {
-          setCoursesData(coursesRes?.data?.data || coursesRes?.data || coursesRes || {});
+          // The interceptor already unwraps the envelope, so coursesRes IS the data
+          const cData = coursesRes?.data ?? coursesRes;
+          console.log('[Learning] coursesRes shape:', typeof cData, Array.isArray(cData) ? 'array' : 'object', Object.keys(cData || {}).slice(0, 5));
+          setCoursesData(cData && typeof cData === 'object' && !Array.isArray(cData) ? cData : {});
         }
-        
+
         if (myCoursesRes) {
-          // It's a paginated response according to the user
-          const mData = myCoursesRes?.data?.data || myCoursesRes?.data || myCoursesRes;
+          const mData = myCoursesRes?.data ?? myCoursesRes;
+          console.log('[Learning] myCoursesRes shape:', typeof mData, Array.isArray(mData));
           if (Array.isArray(mData)) {
             setMyCoursesData(mData);
           }
         }
-        
+
         if (subjectsRes) {
-          const sData = subjectsRes?.data?.data || subjectsRes?.data || subjectsRes;
+          const sData = subjectsRes?.data ?? subjectsRes;
+          console.log('[Learning] subjectsRes shape:', typeof sData, Array.isArray(sData) ? 'array len=' + sData.length : 'object keys=' + Object.keys(sData || {}).slice(0, 5));
           let parsedSubjects: any[] = [];
           if (Array.isArray(sData)) {
             parsedSubjects = sData;
@@ -69,10 +73,12 @@ export default function LearningPage() {
               ...sData[key]
             }));
           }
-          
+
           setSubjects(parsedSubjects);
-          if (parsedSubjects.length > 0 && !activeSubject) {
-            setActiveSubject(parsedSubjects[0].name || parsedSubjects[0]);
+          // Always set to first subject from API (default 'arabic' was causing mismatches)
+          if (parsedSubjects.length > 0) {
+            const firstKey = parsedSubjects[0].id ?? parsedSubjects[0].name ?? parsedSubjects[0];
+            setActiveSubject(String(firstKey));
           }
         }
       } catch (error) {
@@ -81,7 +87,7 @@ export default function LearningPage() {
         setIsLoading(false);
       }
     }
-    
+
     fetchData();
   }, []);
 
@@ -90,12 +96,12 @@ export default function LearningPage() {
   return (
     <div className="min-h-screen bg-white pb-24" dir="rtl">
       <AuthenticatedHeader />
-      
+
       <main className="container mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8 max-w-7xl">
-        
+
         {/* RIGHT COLUMN (Main Content) - Notice flex order changes for RTL */}
-        <div className="w-full lg:w-3/4 flex flex-col order-1 lg:order-2">
-          
+        <div className="w-full lg:w-4/6 flex flex-col order-1 lg:order-2">
+
           {/* Header */}
           <div className="flex items-center justify-end gap-3 mb-8">
             <h1 className="text-2xl font-bold text-gray-800">الدورات التعليمية</h1>
@@ -106,17 +112,15 @@ export default function LearningPage() {
           <div className="flex w-full max-w-sm mb-10 border border-gray-200 rounded-2xl p-1 bg-white self-end">
             <button
               onClick={() => setActiveLevel('BAC')}
-              className={`flex-1 py-3 rounded-xl font-bold transition-colors ${
-                activeLevel === 'BAC' ? 'bg-[#38b6c7] text-white' : 'text-[#38b6c7] hover:bg-gray-50'
-              }`}
+              className={`flex-1 py-3 rounded-xl font-bold transition-colors ${activeLevel === 'BAC' ? 'bg-[#38b6c7] text-white' : 'text-[#38b6c7] hover:bg-gray-50'
+                }`}
             >
               BAC
             </button>
             <button
               onClick={() => setActiveLevel('BEM')}
-              className={`flex-1 py-3 rounded-xl font-bold transition-colors ${
-                activeLevel === 'BEM' ? 'bg-[#38b6c7] text-white' : 'text-[#38b6c7] hover:bg-gray-50'
-              }`}
+              className={`flex-1 py-3 rounded-xl font-bold transition-colors ${activeLevel === 'BEM' ? 'bg-[#38b6c7] text-white' : 'text-[#38b6c7] hover:bg-gray-50'
+                }`}
             >
               BEM
             </button>
@@ -124,7 +128,7 @@ export default function LearningPage() {
 
           {/* Subjects Row */}
           <div className="relative flex items-center mb-12">
-            <div 
+            <div
               id="subjects-scroll-container"
               className="flex items-center justify-start md:justify-end gap-8 overflow-x-auto pb-4 hide-scrollbar scroll-smooth w-full"
             >
@@ -134,48 +138,60 @@ export default function LearningPage() {
                 const subjectKey = subject.id || subjectName;
 
                 // Determine icon safely
-                let iconComponent = <BookOpen className="w-8 h-8" />;
+                let iconComponent = (
+                  <BookOpen className={`w-8 h-8 transition-colors duration-300 ${activeSubject === subjectKey ? 'text-white' : 'text-[#38b6c7]'}`} />
+                );
                 const firstCourseWithIcon = coursesData[subjectName]?.find((c: any) => c.subject?.icon);
                 if (subject.icon) {
                   const iconUrl = subject.icon.startsWith('http') ? subject.icon : `https://mrstudy.net/storage/${subject.icon}`;
                   iconComponent = (
-                    <img 
-                      src={iconUrl} 
-                      alt={subjectName} 
-                      className={`w-8 h-8 object-contain ${activeSubject === subjectKey ? 'brightness-0 invert' : ''}`} 
+                    <img
+                      src={iconUrl}
+                      alt={subjectName}
+                      className={`w-8 h-8 object-contain transition-all duration-300 ${activeSubject === subjectKey
+                        ? 'brightness-0 invert'
+                        : 'opacity-100'
+                        }`}
+                      style={activeSubject !== subjectKey ? {
+                        filter: 'brightness(0) saturate(100%) invert(55%) sepia(60%) saturate(400%) hue-rotate(155deg) brightness(95%)'
+                      } : undefined}
                     />
                   );
                 } else if (firstCourseWithIcon) {
                   const iconPath = firstCourseWithIcon.subject.icon;
                   const iconUrl = iconPath.startsWith('http') ? iconPath : `https://mrstudy.net/storage/${iconPath}`;
                   iconComponent = (
-                    <img 
-                      src={iconUrl} 
-                      alt={subjectName} 
-                      className={`w-8 h-8 object-contain ${activeSubject === subjectKey ? 'brightness-0 invert' : ''}`} 
+                    <img
+                      src={iconUrl}
+                      alt={subjectName}
+                      className={`w-8 h-8 object-contain transition-all duration-300 ${activeSubject === subjectKey
+                        ? 'brightness-0 invert'
+                        : 'opacity-100'
+                        }`}
+                      style={activeSubject !== subjectKey ? {
+                        filter: 'brightness(0) saturate(100%) invert(55%) sepia(60%) saturate(400%) hue-rotate(155deg) brightness(95%)'
+                      } : undefined}
                     />
                   );
                 }
 
                 return (
-                  <div 
-                    key={subjectKey} 
+                  <div
+                    key={subjectKey}
                     onClick={() => {
                       setActiveSubject(subjectKey);
                       setActiveBottomTab('all'); // Reveal details on tab switch
                     }}
                     className="flex flex-col items-center gap-3 cursor-pointer group min-w-[80px] shrink-0"
                   >
-                    <div className={`w-20 h-20 rounded-full border-2 flex items-center justify-center transition-colors shadow-sm overflow-hidden ${
-                      activeSubject === subjectKey 
-                        ? 'border-[#38b6c7] bg-[#38b6c7] text-white' 
-                        : 'border-gray-100 bg-white text-gray-400 group-hover:border-[#38b6c7]'
-                    }`}>
+                    <div className={`w-20 h-20 rounded-full border-2 flex items-center justify-center transition-colors shadow-sm overflow-hidden ${activeSubject === subjectKey
+                      ? 'border-[#38b6c7] bg-[#38b6c7] text-white'
+                      : 'border-gray-100 bg-white text-gray-400 group-hover:border-[#38b6c7]'
+                      }`}>
                       {iconComponent}
                     </div>
-                    <span className={`font-bold text-sm transition-colors whitespace-nowrap ${
-                      activeSubject === subjectKey ? 'text-[#38b6c7]' : 'text-gray-700 group-hover:text-[#38b6c7]'
-                    }`}>
+                    <span className={`font-bold text-sm transition-colors whitespace-nowrap ${activeSubject === subjectKey ? 'text-[#38b6c7]' : 'text-gray-700 group-hover:text-[#38b6c7]'
+                      }`}>
                       {subjectName}
                     </span>
                   </div>
@@ -193,7 +209,7 @@ export default function LearningPage() {
             <div className="space-y-12 min-h-[400px]">
               {(() => {
                 const isMineTab = activeBottomTab === 'mine';
-                
+
                 // If it's the "mine" tab, use myCoursesData (not filtered by subject)
                 if (isMineTab) {
                   if (myCoursesData.length === 0) {
@@ -258,7 +274,7 @@ export default function LearningPage() {
         </div>
 
         {/* LEFT COLUMN (Sidebar) */}
-        <div className="w-full lg:w-1/4 flex flex-col gap-6 order-2 lg:order-1">
+        <div className="w-full lg:w-2/6 flex flex-col gap-6 order-2 lg:order-1">
           <StreakWidget />
           <RankWidget />
           <UpgradeWidget />
@@ -268,11 +284,11 @@ export default function LearningPage() {
       </main>
 
       {/* Floating Bottom Navigation */}
-      <FloatingBottomNav 
-        activeTab={activeBottomTab} 
-        onTabChange={setActiveBottomTab} 
+      <FloatingBottomNav
+        activeTab={activeBottomTab}
+        onTabChange={setActiveBottomTab}
       />
-      
+
     </div>
   );
 }

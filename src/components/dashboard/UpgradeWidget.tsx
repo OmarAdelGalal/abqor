@@ -3,11 +3,24 @@ import { Crown } from 'lucide-react';
 
 export default function UpgradeWidget() {
   return (
-    <div className="bg-[#004e70] rounded-3xl p-7 pt-10 w-auto text-white relative overflow-hidden flex flex-col items-end text-right">
-      
-      {/* Decorative shapes */}
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-5 rounded-bl-full"></div>
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-5 rounded-tr-full"></div>
+    <div dir='rtl' className="bg-[#004e70] rounded-3xl p-7 pt-10 w-auto text-white relative overflow-hidden flex flex-col items-end text-right">
+
+      {/* Decorative background image */}
+      <img
+        src="/Vector1.png"
+        alt=""
+        aria-hidden="true"
+        className="absolute pointer-events-none select-none"
+        style={{
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          height: '80%',
+          width: 'auto',
+          opacity: 0.12,
+          mixBlendMode: 'screen',
+        }}
+      />
 
       {/* Header */}
       <div className="flex items-center gap-2 mb-2 relative z-10 w-full justify-end">

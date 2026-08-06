@@ -39,9 +39,13 @@ export default function StreakWidget({ flame = 0 }: StreakWidgetProps) {
           <div key={idx} className="flex flex-col items-center gap-2">
             <span className="text-xs font-bold text-gray-500">{day.label}</span>
             {day.checked ? (
-              <CheckCircle2 size={18} className="text-orange-500 fill-orange-500 border-none bg-white rounded-full" />
+              <div className="w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center shadow-sm">
+                <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+                  <path d="M1 4L3.5 6.5L9 1" stroke="white" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
             ) : (
-              <div className="w-4 h-4 rounded-full bg-gray-100"></div>
+              <div className="w-5 h-5 rounded-full bg-gray-100"></div>
             )}
           </div>
         ))}

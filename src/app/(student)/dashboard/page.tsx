@@ -55,7 +55,7 @@ export default function DashboardPage() {
       <AuthenticatedHeader health={stats.health} diamonds={stats.diamonds} flame={stats.flame} />
       
       <main className="container mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 items-start">
           {/* Main Content Area (Right side in RTL) */}
           <div className="flex flex-col gap-6 w-full relative">
             <ExamCountdownHero bacDate={bacDate} />
@@ -64,7 +64,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Sidebar Area (Left side in RTL) */}
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-4 ">
             <StreakWidget flame={stats.flame} />
             <RankWidget />
             <UpgradeWidget />

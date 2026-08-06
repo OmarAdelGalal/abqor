@@ -50,90 +50,89 @@ export default function CourseCard({ course }: { course: CourseData }) {
   return (
     <div className="flex flex-col w-full bg-white rounded-[24px] shadow-sm hover:shadow-md transition-shadow p-2.5 border border-gray-100">
       
-      {/* Top Section - Colored Box */}
-      {/* We need overflow-visible on the parent to allow the teacher's head to pop out, 
-          but rounded corners on the background. We can achieve this with an inner div. */}
-      <div className="relative w-full h-[180px] rounded-[18px] bg-gradient-to-l from-[#b32a72] to-[#564972] mt-2 mb-2 flex p-4">
-        
-        {/* Left Side: Teacher Image Cutout */}
-        <div className="absolute left-0 bottom-0 w-32 md:w-40 h-[115%] z-10 pointer-events-none">
-           <img src={imageUrl} alt={teacherName} className="w-full h-full object-contain object-bottom drop-shadow-xl" />
-        </div>
+      {/* Top Banner Section - IMAGE ONLY */}
+      <div className="relative w-full h-[180px] rounded-[18px] overflow-hidden bg-gradient-to-l from-[#b32a72] to-[#564972] mb-3">
+        {/* Course / Teacher Image */}
+        <img
+          src={imageUrl}
+          alt={teacherName}
+          className="w-full h-full object-cover object-center"
+        />
 
-        {/* Right Side: Text & Badges (RTL means this is flex-start) */}
-        <div className="flex-1 flex flex-col items-start justify-center text-white pr-2 z-20">
-           <h3 className="text-2xl font-black mb-1">{course.title || 'دورة الفصل الأول'}</h3>
-           <p className="text-base font-medium opacity-95 mb-3">{subjectName ? `في ${subjectName}` : ''}</p>
-           <p className="text-lg font-bold mb-4">{teacherName ? `أ. ${teacherName}` : ''}</p>
-
-           <div className="flex items-center gap-2 mt-auto pb-1">
-              {isRecorded && (
-                <span className="bg-white text-[#b32a72] text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
-                  مسجلة <PlayCircle className="w-3 h-3" />
-                </span>
-              )}
-              {isLive && (
-                <span className="bg-[#ff4b4b] text-white text-xs font-bold px-2 py-1 rounded-md flex items-center gap-1.5 shadow-sm">
-                  Live <Video className="w-3 h-3" />
-                </span>
-              )}
-           </div>
+        {/* Badges in top corner */}
+        <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+          {isRecorded && (
+            <span className="bg-white/95 backdrop-blur-sm text-[#b32a72] text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-md">
+              مسجلة <PlayCircle className="w-3.5 h-3.5" />
+            </span>
+          )}
+          {isLive && (
+            <span className="bg-[#ff4b4b] text-white text-xs font-bold px-2.5 py-1 rounded-md flex items-center gap-1.5 shadow-md">
+              Live <Video className="w-3.5 h-3.5" />
+            </span>
+          )}
         </div>
       </div>
 
-      {/* Bottom Section - White Info */}
-      <div className="pt-3 pb-1 px-3 flex flex-col bg-white">
-         
-         {/* Time */}
-         <div className="flex items-center justify-center gap-2 mb-3 text-gray-500">
-            <span className="text-sm font-medium">توقيت الدراسة : {course.time || '20:00 - 23:00'}</span>
-            <Clock className="w-4 h-4 text-[#b32a72]" />
-         </div>
+      {/* Bottom Content Section - ALL TEXT BELOW THE IMAGE */}
+      <div className="flex flex-col px-2 pb-1 text-right">
+        {/* Title */}
+        <h3 className="text-xl font-black text-[#004e70] mb-1 leading-tight">
+          {course.title || 'دورة الفصل الأول'}
+        </h3>
 
-         {/* Lessons */}
-         <div className="flex items-center justify-center gap-4 mb-5 text-gray-500 font-medium text-sm">
-            <div className="flex items-center gap-1.5">
-               <span>{course.lessons_count < 10 ? `0${course.lessons_count}` : course.lessons_count} حصص دروس</span>
-               <BookOpen className="w-4 h-4 text-[#b32a72]" />
-            </div>
-            <div className="flex items-center gap-1.5">
-               <span>{course.exercises_count || 12} حصة حل مواضيع</span>
-               <BookOpen className="w-4 h-4 text-[#b32a72]" />
-            </div>
-         </div>
+        {/* Subtitle / Subject & Teacher */}
+        <div className="flex items-center gap-2 text-gray-600 font-bold text-sm mb-3">
+          {subjectName && <span>في {subjectName}</span>}
+          {subjectName && teacherName && <span>•</span>}
+          {teacherName && <span>أ. {teacherName}</span>}
+        </div>
 
-         <div className="mt-auto">
-           {course.subscribed ? (
-             <>
-               {/* Progress Bar for Subscribed */}
-               <div className="flex items-center gap-3 mb-4">
-                 <span className="text-[#0d4a57] font-black text-sm">
-                   {progressCurrent}/{progressTotal}
-                 </span>
-                 <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden flex-1">
-                   <div className="h-full rounded-full bg-[#b32a72]" style={{ width: `${progressPercent}%` }}></div>
-                 </div>
-               </div>
+        {/* Time */}
+        <div className="flex items-center justify-start gap-2 mb-2.5 text-gray-500">
+          <Clock className="w-4 h-4 text-[#b32a72]" />
+          <span className="text-sm font-medium">توقيت الدراسة : {course.time || '20:00 - 23:00'}</span>
+        </div>
 
-               {/* Action Button */}
-               <Link href={`/learning/course/${course.id}`} className="block w-full">
-                 <button className="w-full py-3 rounded-[14px] font-bold bg-[#fff0f5] text-[#b32a72] transition-colors hover:brightness-95 text-lg">
-                   أكمل الدورة
-                 </button>
-               </Link>
-             </>
-           ) : (
-             <>
-               <div className="h-4"></div> {/* Spacer */}
-               <Link href={`/learning/course/${course.id}`} className="block w-full">
-                 <button className="w-full py-3 rounded-[14px] font-bold bg-[#fff0f5] text-[#b32a72] transition-colors hover:brightness-95 text-lg">
-                   اشترك الآن
-                 </button>
-               </Link>
-             </>
-           )}
-         </div>
-         
+        {/* Lessons & Exercises Count */}
+        <div className="flex items-center gap-4 mb-4 text-gray-500 font-medium text-xs">
+          <div className="flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-[#b32a72]" />
+            <span>{course.lessons_count < 10 ? `0${course.lessons_count}` : course.lessons_count} حصص دروس</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <BookOpen className="w-4 h-4 text-[#b32a72]" />
+            <span>{course.exercises_count || 12} حصة حل مواضيع</span>
+          </div>
+        </div>
+
+        {/* Action Button & Progress */}
+        <div className="mt-auto pt-2">
+          {course.subscribed ? (
+            <>
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-[#0d4a57] font-black text-sm">
+                  {progressCurrent}/{progressTotal}
+                </span>
+                <div className="w-full h-2.5 bg-gray-100 rounded-full overflow-hidden flex-1">
+                  <div className="h-full rounded-full bg-[#b32a72]" style={{ width: `${progressPercent}%` }}></div>
+                </div>
+              </div>
+
+              <Link href={`/learning/course/${course.id}`} className="block w-full">
+                <button className="w-full py-3 rounded-[14px] font-bold bg-[#38b6c7] hover:bg-[#2fa3b3] text-white transition-colors shadow-sm text-base">
+                  أكمل الدورة
+                </button>
+              </Link>
+            </>
+          ) : (
+            <Link href={`/learning/course/${course.id}`} className="block w-full">
+              <button className="w-full py-3 rounded-[14px] font-bold bg-[#38b6c7] hover:bg-[#2fa3b3] text-white transition-colors shadow-sm text-base">
+                مجاناً الآن
+              </button>
+            </Link>
+          )}
+        </div>
       </div>
 
     </div>

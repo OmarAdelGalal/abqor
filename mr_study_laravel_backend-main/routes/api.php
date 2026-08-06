@@ -198,6 +198,7 @@ Route::prefix('user')->group(function () {
         //courses
         Route::prefix('courses')->group(function () {
             Route::get('get_reviews/{course}', [StudentsCourseController::class, 'getCourseReviews'])->whereNumber('course');
+            Route::post('review/{course}', [StudentsCourseController::class, 'addReview'])->whereNumber('course');
             Route::get('lectures_group/{type}/{course}', [StudentsCourseController::class, 'showLecturesGroup'])->whereIn('type', LectureType::values())->whereNumber('course');
             Route::get('/{course}', [StudentsCourseController::class, 'show'])->whereNumber('course');
             Route::get('link/{link}', [StudentsCourseController::class, 'showByLink']);

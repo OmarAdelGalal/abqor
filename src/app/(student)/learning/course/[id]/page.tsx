@@ -1,10 +1,10 @@
-'use client';
+"use client";
 
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowRight, Share2, Play, Lock, FileText, X, MessageCircle, Clock } from 'lucide-react';
 import Link from 'next/link';
 import AuthenticatedHeader from '@/components/layout/AuthenticatedHeader';
-import { useParams } from 'next/navigation';
+import { useParams } from 'next/navigation';  
 import { coursesApi } from '@/lib/courses';
 
 export default function CourseDetailsPage() {
